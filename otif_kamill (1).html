@@ -1,0 +1,2982 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>OTIF KAMILL - Control de Pedidos</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script id="tailwind-config">
+tailwind.config={darkMode:"class",theme:{extend:{colors:{"on-tertiary-fixed":"#002114","on-primary":"#ffffff","surface-container":"#e5eeff","inverse-on-surface":"#eaf1ff","secondary-container":"#5bb8fe","surface-container-highest":"#d3e4fe","on-secondary-fixed-variant":"#004b73","surface-container-high":"#dce9ff","secondary":"#006398","surface-tint":"#565e74","tertiary-fixed-dim":"#68dba9","on-secondary-fixed":"#001d31","outline-variant":"#c6c6cd","on-tertiary-container":"#069669","primary-fixed-dim":"#bec6e0","error":"#ba1a1a","on-secondary-container":"#00476e","on-error-container":"#93000a","on-primary-container":"#7c839b","surface-dim":"#cbdbf5","inverse-primary":"#bec6e0","secondary-fixed":"#cce5ff","secondary-fixed-dim":"#93ccff","on-primary-fixed":"#131b2e","tertiary-container":"#002114","primary-fixed":"#dae2fd","on-tertiary-fixed-variant":"#005137","tertiary-fixed":"#85f8c4","background":"#f8f9ff","surface":"#f8f9ff","surface-bright":"#f8f9ff","surface-variant":"#d3e4fe","on-surface-variant":"#45464d","tertiary":"#000000","on-primary-fixed-variant":"#3f465c","surface-container-low":"#eff4ff","on-error":"#ffffff","primary":"#000000","on-background":"#0b1c30","on-tertiary":"#ffffff","outline":"#76777d","primary-container":"#131b2e","on-surface":"#0b1c30","on-secondary":"#ffffff","inverse-surface":"#213145","surface-container-lowest":"#ffffff","error-container":"#ffdad6"},borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},spacing:{"space-sm":"0.5rem","space-lg":"1.25rem","margin":"2rem","space-md":"0.75rem","gutter":"1.25rem","gutter-mobile":"0.75rem","space-xl":"1.75rem","space-xs":"0.25rem","margin-mobile":"1rem"},fontFamily:{"label-sm":["Hanken Grotesk"],"label-md":["Hanken Grotesk"],"display-lg-mobile":["Hanken Grotesk"],"body-sm":["Hanken Grotesk"],"metric-headline":["Hanken Grotesk"],"headline-xl":["Hanken Grotesk"],"headline-md":["Hanken Grotesk"],"title-sm":["Hanken Grotesk"],"display-lg":["Hanken Grotesk"],"headline-lg":["Hanken Grotesk"],"body-md":["Hanken Grotesk"],"body-lg":["Hanken Grotesk"],"metric-headline-mobile":["Hanken Grotesk"]},fontSize:{"label-sm":["11px",{lineHeight:"14px",letterSpacing:"0.04em",fontWeight:"600"}],"label-md":["12px",{lineHeight:"16px",letterSpacing:"0.02em",fontWeight:"600"}],"display-lg-mobile":["28px",{lineHeight:"36px",letterSpacing:"-0.02em",fontWeight:"700"}],"body-sm":["12px",{lineHeight:"16px",fontWeight:"400"}],"metric-headline":["32px",{lineHeight:"38px",letterSpacing:"-0.02em",fontWeight:"700"}],"headline-xl":["28px",{lineHeight:"36px",letterSpacing:"-0.02em",fontWeight:"600"}],"headline-md":["18px",{lineHeight:"24px",letterSpacing:"-0.01em",fontWeight:"600"}],"title-sm":["15px",{lineHeight:"20px",letterSpacing:"-0.005em",fontWeight:"600"}],"display-lg":["36px",{lineHeight:"44px",letterSpacing:"-0.025em",fontWeight:"700"}],"headline-lg":["22px",{lineHeight:"30px",letterSpacing:"-0.015em",fontWeight:"600"}],"body-md":["13px",{lineHeight:"18px",fontWeight:"400"}],"body-lg":["15px",{lineHeight:"22px",fontWeight:"400"}],"metric-headline-mobile":["24px",{lineHeight:"30px",letterSpacing:"-0.015em",fontWeight:"700"}]}}}};
+</script>
+<style>
+@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}
+::-webkit-scrollbar{display:none;}
+.badge-conforme{background:#e5eeff;color:#069669;}
+.badge-faltante{background:#ffdad6;color:#93000a;}
+.badge-sobrante{background:#dce9ff;color:#006398;}
+.badge-malestado{background:#fef3c7;color:#92400e;}
+.badge-sinevaluar{background:#eff4ff;color:#45464d;}
+.spin{animation:spin 1s linear infinite;}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.fade-highlight{animation:highlight-pulse 1.2s ease-out;}
+@keyframes highlight-pulse{0%{background-color:rgba(91,184,254,0.35);}100%{background-color:transparent;}}
+.row-checkbox, #select-all-rows{width:16px;height:16px;accent-color:#006398;cursor:pointer;}
+#chart-tooltip{transition:opacity .12s ease;}
+.chart-day-group{cursor:pointer;}
+.chart-day-group:hover rect{opacity:.85;}
+tr.row-selected{background-color:rgba(91,184,254,0.12);}
+</style>
+</head>
+<body class="bg-surface font-body-md text-body-md text-on-surface antialiased">
+
+<!-- ============================= HEADER ============================= -->
+<header class="fixed top-0 w-full z-50 bg-surface-container-lowest/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/40">
+  <div class="h-16 w-full px-margin flex items-center justify-between gap-space-lg">
+    <div class="flex items-center gap-space-lg shrink-0">
+      <div class="flex items-center gap-space-md">
+        <div class="flex flex-col">
+          <span class="font-title-sm text-title-sm font-bold text-on-surface tracking-tight">OTIF KAMILL</span>
+          <span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">OSAWMS - ODAN89</span>
+        </div>
+      </div>
+      <div class="h-6 w-px bg-outline-variant/50 hidden lg:block"></div>
+      <nav class="hidden xl:flex items-center gap-space-xs" id="main-nav">
+        <a id="nav-tablero" class="nav-link px-space-md py-space-xs rounded-lg transition-colors bg-primary-container text-on-primary font-bold" href="#" data-view="view-tablero">Tablero OTIF</a>
+        <a id="nav-incidencias" class="nav-link font-label-md text-label-md px-space-md py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" href="#" data-view="view-incidencias">Monitoreo de Incidencias</a>
+        <a id="nav-resumen" class="nav-link font-label-md text-label-md px-space-md py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" href="#" data-view="view-resumen">Cuadros Resumen</a>
+        <a id="nav-inventario" class="nav-link font-label-md text-label-md px-space-md py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" href="#" data-view="view-inventario">Reporte de Inventarios</a>
+      </nav>
+    </div>
+    <div class="flex items-center gap-space-md shrink-0">
+      <div class="hidden md:flex items-center gap-space-xs px-space-md py-space-xs rounded-lg bg-surface-container-low border border-outline-variant/40">
+        <span id="conn-dot" class="w-2 h-2 rounded-full bg-outline"></span>
+        <span id="conn-label" class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Conectando...</span>
+      </div>
+      <div id="date-range-pill" class="hidden sm:flex items-center gap-space-xs px-space-md py-space-xs rounded-lg bg-surface-container-lowest border border-outline-variant/60">
+        <span class="material-symbols-outlined text-[18px] text-on-surface-variant">calendar_today</span>
+        <span class="font-body-sm text-body-sm font-semibold text-on-surface" id="date-range-label">Rango: --</span>
+      </div>
+      <div class="h-6 w-px bg-outline-variant/50 hidden sm:block"></div>
+      <button aria-label="Notificaciones" class="relative p-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" type="button">
+        <span class="material-symbols-outlined text-[20px]">notifications</span>
+        <span id="notif-dot" class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full hidden"></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="w-full pt-16 bg-surface min-h-[calc(100vh-4rem)]">
+<div id="view-tablero" class="flex flex-col w-full">
+
+<!-- ==================== QUICK ACTION FILTERS BAR ==================== -->
+<section class="w-full px-margin py-space-md bg-surface-container-lowest shadow-sm">
+  <div class="w-full flex flex-col xl:flex-row xl:items-center justify-between gap-space-md">
+    <div class="flex flex-col gap-space-xs">
+      <span class="font-headline-md text-headline-md font-bold text-on-surface">Tablero OTIF - Control de Pedidos</span>
+      <span class="font-body-sm text-body-sm text-on-surface-variant">Conectado en vivo a la hoja de Control de Pedidos</span>
+    </div>
+    <div class="flex flex-wrap items-center gap-space-sm shrink-0">
+      <div class="relative inline-flex items-center bg-surface-container-low px-space-md py-space-xs rounded-lg shadow-sm">
+        <span class="material-symbols-outlined text-[18px] text-on-surface-variant mr-space-xs">warehouse</span>
+        <select id="filter-bodega" class="bg-transparent font-label-md text-label-md text-on-surface font-semibold focus:outline-none cursor-pointer pr-space-md">
+          <option value="all">Bodega: Todas</option>
+        </select>
+      </div>
+      <div class="relative inline-flex items-center bg-surface-container-low px-space-md py-space-xs rounded-lg shadow-sm">
+        <span class="material-symbols-outlined text-[18px] text-on-surface-variant mr-space-xs">calendar_month</span>
+        <select id="filter-mes" class="bg-transparent font-label-md text-label-md text-on-surface font-semibold focus:outline-none cursor-pointer pr-space-md">
+          <option value="all">Mes: Todos</option>
+        </select>
+      </div>
+      <div class="relative inline-flex items-center bg-surface-container-low px-space-md py-space-xs rounded-lg shadow-sm">
+        <span class="material-symbols-outlined text-[18px] text-on-surface-variant mr-space-xs">fact_check</span>
+        <select id="filter-estatus" class="bg-transparent font-label-md text-label-md text-on-surface font-semibold focus:outline-none cursor-pointer pr-space-md">
+          <option value="all">Estatus: Todos</option>
+          <option value="Conforme">Conforme</option>
+          <option value="Faltante">Faltante</option>
+          <option value="Sobrante">Sobrante</option>
+          <option value="Mal Estado">Mal Estado</option>
+          <option value="Sin Evaluar">Sin Evaluar</option>
+        </select>
+      </div>
+      <button class="inline-flex items-center gap-space-xs px-space-md py-space-xs rounded-lg bg-surface-container-high hover:bg-surface-container-highest transition-colors text-on-surface font-label-md text-label-md font-bold shadow-sm" id="sync-btn" type="button">
+        <span class="material-symbols-outlined text-[18px] text-secondary" id="sync-icon">sync</span>
+        <span>Sincronizar Sheet</span>
+      </button>
+      <button class="inline-flex items-center gap-space-xs px-space-md py-space-xs rounded-lg bg-surface-container-high hover:bg-surface-container-highest transition-colors text-on-surface font-label-md text-label-md font-bold shadow-sm" id="export-btn" type="button">
+        <span class="material-symbols-outlined text-[18px]">description</span>
+        <span>Exportar CSV</span>
+      </button>
+      <button class="inline-flex items-center gap-space-xs px-space-md py-space-xs rounded-lg bg-primary-container text-on-primary font-label-md text-label-md font-bold shadow-md hover:opacity-90 transition-opacity" id="export-xlsx-btn" type="button">
+        <span class="material-symbols-outlined text-[18px]">ios_share</span>
+        <span>Exportar Excel</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= MAIN BODY CONTENT ========================= -->
+<div class="w-full px-margin py-space-lg flex flex-col gap-space-xl">
+
+<!-- ---------------------- OTIF POR RANGO DE TIEMPO (4) ---------------------- -->
+<section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-space-lg">
+  <!-- OTIF Día en Curso (Hoy) -->
+  <div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all" id="otif-card-today">
+    <div class="absolute top-0 left-0 w-1.5 h-full bg-on-tertiary-container"></div>
+    <div class="flex flex-col gap-space-xs">
+      <div class="flex items-center justify-between">
+        <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">OTIF Día en Curso (Hoy)</span>
+        <span class="px-space-xs py-0.5 rounded bg-surface-container-high font-label-sm text-label-sm text-on-surface font-bold" id="otif-today-meta-badge">Meta: ≥95.0%</span>
+      </div>
+      <div class="flex items-baseline gap-space-md mt-space-xs">
+        <span class="font-metric-headline text-metric-headline font-bold text-on-surface tracking-tight" id="otif-today-pct">-</span>
+        <div class="inline-flex items-center gap-0.5 px-space-xs py-0.5 rounded font-label-sm text-label-sm font-bold" id="otif-today-trend">
+          <span class="material-symbols-outlined text-[14px]" id="otif-today-trend-icon">trending_flat</span>
+          <span id="otif-today-trend-txt">sin dato previo</span>
+        </div>
+      </div>
+      <span class="font-label-sm text-[11px] text-on-surface-variant" id="otif-today-date">Sin fecha detectada</span>
+    </div>
+    <div class="mt-space-md flex flex-col gap-space-xs">
+      <div class="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden flex">
+        <div class="h-full bg-on-tertiary-container" id="otif-today-bar" style="width:0%"></div>
+        <div class="h-full bg-error" id="otif-today-bar-gap" style="width:0%"></div>
+      </div>
+      <div class="flex justify-between items-center text-[11px] font-label-sm text-on-surface-variant mt-1">
+        <span>Despachados: <strong class="text-on-surface" id="otif-today-desp">0</strong></span>
+        <span>Cumplidos OTIF: <strong class="text-on-tertiary-container font-semibold" id="otif-today-cumpl">0</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- OTIF Lapso 7 Días (Semana Móvil) -->
+  <div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all" id="otif-card-7d">
+    <div class="absolute top-0 left-0 w-1.5 h-full bg-secondary-container"></div>
+    <div class="flex flex-col gap-space-xs">
+      <div class="flex items-center justify-between">
+        <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">OTIF Lapso 7 Días (Semana Móvil)</span>
+        <span class="px-space-xs py-0.5 rounded bg-surface-container-high font-label-sm text-label-sm text-on-surface font-bold">Meta: ≥95.0%</span>
+      </div>
+      <div class="flex items-baseline gap-space-md mt-space-xs">
+        <span class="font-metric-headline text-metric-headline font-bold text-on-surface tracking-tight" id="otif-7d-pct">-</span>
+        <div class="inline-flex items-center gap-0.5 px-space-xs py-0.5 rounded font-label-sm text-label-sm font-bold" id="otif-7d-trend">
+          <span class="material-symbols-outlined text-[14px]" id="otif-7d-trend-icon">trending_flat</span>
+          <span id="otif-7d-trend-txt">sin dato previo</span>
+        </div>
+      </div>
+      <span class="font-label-sm text-[11px] text-on-surface-variant" id="otif-7d-range">Sin rango detectado</span>
+    </div>
+    <div class="mt-space-md flex flex-col gap-space-xs">
+      <div class="flex justify-between items-center font-label-sm text-label-sm text-on-surface-variant">
+        <span>Brecha de cumplimiento:</span>
+        <span class="font-bold" id="otif-7d-gap">-</span>
+      </div>
+      <div class="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden flex">
+        <div class="h-full bg-secondary" id="otif-7d-bar" style="width:0%"></div>
+        <div class="h-full bg-error" id="otif-7d-bar-gap" style="width:0%"></div>
+      </div>
+      <div class="flex justify-between items-center text-[11px] font-label-sm text-on-surface-variant mt-1">
+        <span>Total Pedidos: <strong class="text-on-surface" id="otif-7d-total">0</strong></span>
+        <span>Con Quiebre: <strong class="text-error font-semibold" id="otif-7d-quiebre">0 ped.</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- OTIF Mensual Acumulado (MTD) -->
+  <div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all" id="otif-card-month">
+    <div class="absolute top-0 left-0 w-1.5 h-full bg-on-tertiary-container"></div>
+    <div class="flex flex-col gap-space-xs">
+      <div class="flex items-center justify-between">
+        <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">OTIF Mensual Acumulado (MTD)</span>
+        <span class="px-space-xs py-0.5 rounded bg-surface-container-high font-label-sm text-label-sm text-on-surface font-bold" id="otif-month-label">-</span>
+      </div>
+      <div class="flex items-baseline gap-space-md mt-space-xs">
+        <span class="font-metric-headline text-metric-headline font-bold text-on-surface tracking-tight" id="otif-month-pct">-</span>
+        <div class="inline-flex items-center gap-0.5 px-space-xs py-0.5 rounded font-label-sm text-label-sm font-bold" id="otif-month-trend">
+          <span class="material-symbols-outlined text-[14px]" id="otif-month-trend-icon">trending_flat</span>
+          <span id="otif-month-trend-txt">sin dato previo</span>
+        </div>
+      </div>
+    </div>
+    <div class="mt-space-md flex flex-col gap-space-xs">
+      <div class="flex justify-between items-center font-label-sm text-label-sm text-on-surface-variant">
+        <span>Volumen Consolidado:</span>
+        <span class="font-bold" id="otif-month-gap">-</span>
+      </div>
+      <div class="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden flex">
+        <div class="h-full bg-on-tertiary-container" id="otif-month-bar" style="width:0%"></div>
+      </div>
+      <div class="flex justify-between items-center text-[11px] font-label-sm text-on-surface-variant mt-1">
+        <span>Total: <strong class="text-on-surface" id="otif-month-total">0 pedidos</strong></span>
+        <span><strong class="text-on-surface" id="otif-month-unidades">0</strong> unidades</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Atribución Dominante de Fallas -->
+  <div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all" id="otif-card-atrib">
+    <div class="absolute top-0 left-0 w-1.5 h-full bg-secondary"></div>
+    <div class="flex flex-col gap-space-xs">
+      <div class="flex items-center justify-between">
+        <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Atribución Dominante de Fallas</span>
+        <span class="px-space-xs py-0.5 rounded bg-surface-container text-secondary font-label-sm text-label-sm font-bold" id="otif-atrib-badge">0% Quiebre</span>
+      </div>
+      <div class="flex flex-col mt-space-xs">
+        <span class="font-headline-md text-headline-md font-bold text-on-surface leading-snug" id="otif-atrib-title">Sin incidencias</span>
+        <span class="font-label-sm text-label-sm text-error font-semibold" id="otif-atrib-subtitle">0% de incidencias del período</span>
+      </div>
+    </div>
+    <div class="mt-space-md flex flex-col gap-space-xs">
+      <div class="flex items-center justify-between text-[11px] font-label-sm text-on-surface-variant">
+        <span id="otif-atrib-other1">Sobrantes: 0%</span>
+        <span id="otif-atrib-other2">Sin evaluar: 0%</span>
+      </div>
+      <div class="w-full h-2 rounded-full overflow-hidden flex bg-surface-container-low" id="otif-atrib-bar-wrap">
+        <div class="h-full bg-error" id="otif-atrib-bar-faltante" style="width:0%"></div>
+        <div class="h-full bg-secondary" id="otif-atrib-bar-sobrante" style="width:0%"></div>
+        <div class="h-full bg-amber-500" id="otif-atrib-bar-malestado" style="width:0%"></div>
+      </div>
+      <div class="flex justify-between items-center text-[11px] font-label-sm text-on-surface-variant mt-1">
+        <span>Impacto directo: <strong class="text-on-surface" id="otif-atrib-impacto">0 unidades</strong></span>
+        <button class="text-secondary font-bold hover:underline cursor-pointer" id="otif-atrib-ver-auditoria" type="button">Ver auditoría</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ---------------------- KPI CARDS (4) ---------------------- -->
+<section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-space-lg">
+  <!-- Card 1: Total pedidos -->
+  <div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all" id="kpi-card-total">
+    <div class="absolute top-0 left-0 w-1.5 h-full bg-on-surface"></div>
+    <div class="flex flex-col gap-space-xs">
+      <div class="flex items-center justify-between">
+        <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Total Pedidos (líneas)</span>
+        <span class="px-space-xs py-0.5 rounded bg-surface-container-high font-label-sm text-label-sm text-on-surface font-bold" id="kpi-unidades-badge">0 un.</span>
+      </div>
+      <div class="flex items-baseline gap-space-md mt-space-xs">
+        <span class="font-metric-headline text-metric-headline font-bold text-on-surface tracking-tight" id="kpi-total">0</span>
+        <div class="inline-flex items-center gap-0.5 px-space-xs py-0.5 rounded bg-surface-container-high font-label-sm text-label-sm font-bold text-on-surface-variant" id="kpi-total-trend">
+          <span class="material-symbols-outlined text-[14px]">calendar_month</span>
+          <span id="kpi-total-trend-txt">-</span>
+        </div>
+      </div>
+    </div>
+    <div class="mt-space-md flex flex-col gap-space-xs">
+      <div class="flex justify-between items-center font-label-sm text-label-sm text-on-surface-variant">
+        <span>Evaluadas: <strong class="text-on-surface font-semibold" id="kpi-evaluadas">0</strong></span>
+        <span>Sin evaluar: <strong class="text-on-surface font-semibold" id="kpi-sinevaluar">0</strong></span>
+      </div>
+      <div class="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden flex">
+        <div class="h-full bg-secondary" id="kpi-total-bar-eval" style="width:0%"></div>
+        <div class="h-full bg-surface-container-highest" id="kpi-total-bar-noeval" style="width:100%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 2: % Conforme -->
+  <div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all" id="kpi-card-conforme">
+    <div class="absolute top-0 left-0 w-1.5 h-full bg-on-tertiary-container"></div>
+    <div class="flex flex-col gap-space-xs">
+      <div class="flex items-center justify-between">
+        <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">% Conforme (de evaluadas)</span>
+        <span class="px-space-xs py-0.5 rounded bg-surface-container-high font-label-sm text-label-sm text-on-surface font-bold">Meta: ≥95.0%</span>
+      </div>
+      <div class="flex items-baseline gap-space-md mt-space-xs">
+        <span class="font-metric-headline text-metric-headline font-bold text-on-surface tracking-tight" id="kpi-conforme-pct">0%</span>
+        <div class="inline-flex items-center gap-0.5 px-space-xs py-0.5 rounded font-label-sm text-label-sm font-bold" id="kpi-conforme-trend">
+          <span class="material-symbols-outlined text-[14px]" id="kpi-conforme-trend-icon">trending_flat</span>
+          <span id="kpi-conforme-trend-txt">sin dato previo</span>
+        </div>
+      </div>
+    </div>
+    <div class="mt-space-md flex flex-col gap-space-xs">
+      <div class="flex justify-between items-center font-label-sm text-label-sm text-on-surface-variant">
+        <span>Conformes: <strong class="text-on-surface font-semibold" id="kpi-conforme-count">0</strong></span>
+        <span class="font-bold" id="kpi-conforme-gap">-</span>
+      </div>
+      <div class="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden flex">
+        <div class="h-full bg-on-tertiary-container" id="kpi-conforme-bar" style="width:0%"></div>
+        <div class="h-full bg-error" id="kpi-conforme-bar-gap" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 3: Faltantes -->
+  <div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all" id="kpi-card-faltante">
+    <div class="absolute top-0 left-0 w-1.5 h-full bg-error"></div>
+    <div class="flex flex-col gap-space-xs">
+      <div class="flex items-center justify-between">
+        <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Faltantes</span>
+        <span class="px-space-xs py-0.5 rounded bg-error-container font-label-sm text-label-sm text-on-error-container font-bold" id="kpi-faltante-pct">0%</span>
+      </div>
+      <div class="flex flex-col mt-space-xs">
+        <span class="font-headline-md text-headline-md font-bold text-on-surface leading-snug"><span id="kpi-faltante-count">0</span> líneas</span>
+        <span class="font-label-sm text-label-sm text-error font-semibold"><span id="kpi-faltante-unid">0</span> unidades observadas</span>
+      </div>
+    </div>
+    <div class="mt-space-md p-space-sm rounded bg-surface-container-low flex items-center justify-between">
+      <span class="font-label-sm text-label-sm font-semibold text-on-surface-variant">% del total evaluado</span>
+      <span class="font-title-sm text-title-sm font-bold text-error" id="kpi-faltante-pct2">0%</span>
+    </div>
+  </div>
+
+  <!-- Card 4: Sobrantes -->
+  <div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all" id="kpi-card-sobrante">
+    <div class="absolute top-0 left-0 w-1.5 h-full bg-secondary"></div>
+    <div class="flex flex-col gap-space-xs">
+      <div class="flex items-center justify-between">
+        <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Sobrantes</span>
+        <span class="px-space-xs py-0.5 rounded bg-surface-container text-secondary font-label-sm text-label-sm font-bold" id="kpi-sobrante-pct">0%</span>
+      </div>
+      <div class="flex flex-col mt-space-xs">
+        <span class="font-headline-md text-headline-md font-bold text-on-surface leading-snug"><span id="kpi-sobrante-count">0</span> líneas</span>
+        <span class="font-label-sm text-label-sm text-secondary font-semibold"><span id="kpi-sobrante-unid">0</span> unidades observadas</span>
+      </div>
+    </div>
+    <div class="mt-space-md p-space-sm rounded bg-surface-container-low flex items-center justify-between">
+      <span class="font-label-sm text-label-sm font-semibold text-on-surface-variant">% del total evaluado</span>
+      <span class="font-title-sm text-title-sm font-bold text-secondary" id="kpi-sobrante-pct2">0%</span>
+    </div>
+  </div>
+</section>
+
+<!-- ---------------- CHARTS & BREAKDOWN SECTION ---------------- -->
+<section class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg">
+  <!-- Chart principal: Pedidos/Unidades vs % Conforme -->
+  <div class="xl:col-span-8 bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm mb-space-md">
+      <div class="flex flex-col">
+        <div class="flex items-center gap-space-xs">
+          <span class="material-symbols-outlined text-secondary text-[20px]">bar_chart</span>
+          <h2 class="font-headline-md text-headline-md font-bold text-on-surface">Evolución de Pedidos y Unidades vs. % Conforme</h2>
+        </div>
+        <p class="font-body-sm text-body-sm text-on-surface-variant">Barra ancha y clara (izq.) = Unidades; angosta y azul oscuro (der.) = Pedidos únicos, con el valor impreso en la base. Muestra los últimos 7 días, o el mes completo si filtras por Mes arriba.</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-space-md">
+        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-surface-container-highest"></span><span class="font-label-sm text-label-sm text-on-surface-variant">Unidades (esc.)</span></div>
+        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-secondary"></span><span class="font-label-sm text-label-sm text-on-surface-variant">Pedidos Únicos (BPCS)</span></div>
+        <div class="flex items-center gap-1.5"><span class="w-3 h-0.5 bg-on-tertiary-container"></span><span class="w-2 h-2 rounded-full bg-on-tertiary-container -ml-2"></span><span class="font-label-sm text-label-sm text-on-tertiary-container font-bold">% Conforme</span></div>
+        <div class="flex items-center gap-1.5"><span class="w-4 h-0.5 bg-error"></span><span class="font-label-sm text-label-sm text-error font-semibold">Meta (95%)</span></div>
+      </div>
+    </div>
+    <div class="relative w-full h-[320px] bg-surface-container-low/50 rounded-lg p-space-md flex flex-col justify-between overflow-hidden">
+      <div class="absolute right-4 top-[10%] z-10 bg-surface-container-lowest/90 px-2 py-0.5 rounded shadow-sm flex items-center gap-1" id="chart-meta-watermark">
+        <span class="w-2 h-0.5 bg-error"></span>
+        <span class="font-label-sm text-[10px] font-bold text-error uppercase" id="chart-meta-label">Meta 95.0%</span>
+      </div>
+      <div id="chart-tooltip" class="absolute z-30 pointer-events-none bg-surface-container-lowest border border-outline-variant shadow-lg p-3 rounded-lg text-xs opacity-0 -translate-x-1/2 -translate-y-full">
+        <div class="font-bold text-on-surface border-b border-outline-variant/30 pb-1 mb-1.5 flex items-center justify-between gap-4">
+          <span class="text-secondary font-bold" id="tooltip-day">Fecha</span>
+          <span class="text-on-tertiary-container font-bold" id="tooltip-pct">--% Conforme</span>
+        </div>
+        <div class="flex flex-col gap-0.5 text-[11px] text-on-surface-variant">
+          <div class="flex justify-between gap-3"><span>Pedidos únicos:</span><b class="text-on-surface" id="tooltip-orders">--</b></div>
+          <div class="flex justify-between gap-3"><span>Unidades:</span><b class="text-on-surface" id="tooltip-units">--</b></div>
+          <div class="flex justify-between gap-3"><span>Evaluadas:</span><b class="text-on-surface" id="tooltip-evaluadas">--</b></div>
+          <div class="flex justify-between gap-3 text-error"><span>Faltante/Sobrante:</span><b id="tooltip-desvios">--</b></div>
+        </div>
+      </div>
+      <svg id="main-chart" class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 760 260"></svg>
+    </div>
+    <div class="flex items-center justify-between pt-space-sm text-on-surface-variant font-label-sm text-label-sm">
+      <span>Promedio de % Conforme del período mostrado: <strong class="text-on-surface" id="chart-avg-conforme">-</strong></span>
+      <span class="inline-flex items-center gap-1 text-on-tertiary-container font-semibold" id="chart-note"></span>
+    </div>
+  </div>
+
+  <!-- Desglose de Estatus -->
+  <div class="xl:col-span-4 bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between">
+    <div>
+      <div class="flex items-center justify-between mb-space-xs">
+        <h3 class="font-headline-md text-headline-md font-bold text-on-surface">Desglose de Estatus</h3>
+        <span class="px-space-xs py-0.5 rounded bg-surface-container text-secondary font-label-sm text-label-sm font-semibold">Datos reales</span>
+      </div>
+      <p class="font-body-sm text-body-sm text-on-surface-variant mb-space-md">% de Pedidos únicos (BPCS) y % de Unidades sobre lo evaluado.</p>
+      <div class="flex flex-col gap-space-sm">
+        <div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col gap-space-xs">
+          <div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-on-tertiary-container text-[18px]">check_circle</span><span class="font-label-md text-label-md font-bold text-on-surface">Conforme</span></div>
+          <div class="grid grid-cols-2 gap-space-sm">
+            <div class="flex flex-col gap-0.5">
+              <div class="flex justify-between items-baseline"><span class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wide">Pedidos</span><span class="text-[13px] font-bold text-on-tertiary-container" id="desg-conforme-pedidos-pct">0%</span></div>
+              <div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden"><div class="h-full bg-on-tertiary-container rounded-full" id="desg-conforme-pedidos-bar" style="width:0%"></div></div>
+              <span class="text-[10px] text-on-surface-variant" id="desg-conforme-pedidos-count">0 ped.</span>
+            </div>
+            <div class="flex flex-col gap-0.5">
+              <div class="flex justify-between items-baseline"><span class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wide">Unidades</span><span class="text-[13px] font-bold text-on-tertiary-container" id="desg-conforme-unidades-pct">0%</span></div>
+              <div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden"><div class="h-full bg-on-tertiary-container rounded-full" id="desg-conforme-unidades-bar" style="width:0%"></div></div>
+              <span class="text-[10px] text-on-surface-variant" id="desg-conforme-unidades-count">0 un.</span>
+            </div>
+          </div>
+        </div>
+        <div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col gap-space-xs">
+          <div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-error text-[18px]">remove_shopping_cart</span><span class="font-label-md text-label-md font-bold text-on-surface">Faltante</span></div>
+          <div class="grid grid-cols-2 gap-space-sm">
+            <div class="flex flex-col gap-0.5">
+              <div class="flex justify-between items-baseline"><span class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wide">Pedidos</span><span class="text-[13px] font-bold text-error" id="desg-faltante-pedidos-pct">0%</span></div>
+              <div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden"><div class="h-full bg-error rounded-full" id="desg-faltante-pedidos-bar" style="width:0%"></div></div>
+              <span class="text-[10px] text-on-surface-variant" id="desg-faltante-pedidos-count">0 ped.</span>
+            </div>
+            <div class="flex flex-col gap-0.5">
+              <div class="flex justify-between items-baseline"><span class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wide">Unidades</span><span class="text-[13px] font-bold text-error" id="desg-faltante-unidades-pct">0%</span></div>
+              <div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden"><div class="h-full bg-error rounded-full" id="desg-faltante-unidades-bar" style="width:0%"></div></div>
+              <span class="text-[10px] text-on-surface-variant" id="desg-faltante-unidades-count">0 un.</span>
+            </div>
+          </div>
+        </div>
+        <div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col gap-space-xs">
+          <div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-secondary text-[18px]">inventory_2</span><span class="font-label-md text-label-md font-bold text-on-surface">Sobrante</span></div>
+          <div class="grid grid-cols-2 gap-space-sm">
+            <div class="flex flex-col gap-0.5">
+              <div class="flex justify-between items-baseline"><span class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wide">Pedidos</span><span class="text-[13px] font-bold text-secondary" id="desg-sobrante-pedidos-pct">0%</span></div>
+              <div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden"><div class="h-full bg-secondary rounded-full" id="desg-sobrante-pedidos-bar" style="width:0%"></div></div>
+              <span class="text-[10px] text-on-surface-variant" id="desg-sobrante-pedidos-count">0 ped.</span>
+            </div>
+            <div class="flex flex-col gap-0.5">
+              <div class="flex justify-between items-baseline"><span class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wide">Unidades</span><span class="text-[13px] font-bold text-secondary" id="desg-sobrante-unidades-pct">0%</span></div>
+              <div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden"><div class="h-full bg-secondary rounded-full" id="desg-sobrante-unidades-bar" style="width:0%"></div></div>
+              <span class="text-[10px] text-on-surface-variant" id="desg-sobrante-unidades-count">0 un.</span>
+            </div>
+          </div>
+        </div>
+        <div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col gap-space-xs">
+          <div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-amber-600 text-[18px]">report_problem</span><span class="font-label-md text-label-md font-bold text-on-surface">Mal Estado</span></div>
+          <div class="grid grid-cols-2 gap-space-sm">
+            <div class="flex flex-col gap-0.5">
+              <div class="flex justify-between items-baseline"><span class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wide">Pedidos</span><span class="text-[13px] font-bold text-amber-600" id="desg-malestado-pedidos-pct">0%</span></div>
+              <div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden"><div class="h-full bg-amber-500 rounded-full" id="desg-malestado-pedidos-bar" style="width:0%"></div></div>
+              <span class="text-[10px] text-on-surface-variant" id="desg-malestado-pedidos-count">0 ped.</span>
+            </div>
+            <div class="flex flex-col gap-0.5">
+              <div class="flex justify-between items-baseline"><span class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wide">Unidades</span><span class="text-[13px] font-bold text-amber-600" id="desg-malestado-unidades-pct">0%</span></div>
+              <div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden"><div class="h-full bg-amber-500 rounded-full" id="desg-malestado-unidades-bar" style="width:0%"></div></div>
+              <span class="text-[10px] text-on-surface-variant" id="desg-malestado-unidades-count">0 un.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-space-md p-space-sm rounded bg-surface-container flex items-center justify-between">
+      <div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-secondary text-[20px]">warning</span><span class="font-label-sm text-label-sm font-semibold text-on-surface">Unidades Observadas Totales:</span></div>
+      <span class="font-title-sm text-title-sm font-bold text-on-surface" id="desg-unidades-obs">0 un.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ------------------------- TABLE SECTION ------------------------- -->
+<section class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col">
+  <div class="p-space-lg bg-surface-container-low flex flex-col gap-space-md">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-sm">
+      <div class="flex flex-col">
+        <div class="flex items-center gap-space-xs">
+          <span class="material-symbols-outlined text-secondary text-[20px]">inventory</span>
+          <h3 class="font-headline-md text-headline-md font-bold text-on-surface">Detalle de Pedidos y Evaluación</h3>
+        </div>
+        <p class="font-body-sm text-body-sm text-on-surface-variant">Trazabilidad línea por línea. Haz clic en "Ver / Editar" para registrar estatus y respuestas.</p>
+      </div>
+      <button class="inline-flex items-center gap-1 px-space-md py-space-xs rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md font-semibold shadow-sm hover:bg-surface-container-high transition-colors shrink-0" id="btn-clear-filters" type="button">
+        <span class="material-symbols-outlined text-[16px]">filter_alt_off</span>
+        Restablecer Filtros
+      </button>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-sm pt-space-xs">
+      <div class="relative flex items-center">
+        <span class="material-symbols-outlined absolute left-3 text-[18px] text-on-surface-variant">search</span>
+        <input class="w-full pl-9 pr-3 py-2 bg-surface-container-lowest rounded-lg font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none shadow-sm" id="table-search" placeholder="Buscar por Pedido, Documento, Código o Descripción..." type="text">
+      </div>
+      <div class="relative flex items-center">
+        <span class="material-symbols-outlined absolute left-3 text-[18px] text-on-surface-variant">description</span>
+        <input class="w-full pl-9 pr-3 py-2 bg-surface-container-lowest rounded-lg font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none shadow-sm" id="filter-documento" placeholder="Filtrar por N° Documento (parcial)..." type="text">
+      </div>
+      <div class="relative flex items-center">
+        <span class="material-symbols-outlined absolute left-3 text-[18px] text-on-surface-variant">event</span>
+        <input class="w-full pl-9 pr-3 py-2 bg-surface-container-lowest rounded-lg font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none shadow-sm" id="filter-fecha" placeholder="Fecha exacta (AAAAMMDD)..." type="text">
+      </div>
+      <div class="relative flex items-center">
+        <span class="material-symbols-outlined absolute left-3 text-[18px] text-on-surface-variant">tag</span>
+        <input class="w-full pl-9 pr-3 py-2 bg-surface-container-lowest rounded-lg font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none shadow-sm" id="filter-bpcs" placeholder="Filtrar por Pedido BPCS (parcial)..." type="text">
+      </div>
+    </div>
+    <div class="hidden items-center justify-between gap-space-sm px-space-md py-space-xs rounded-lg bg-secondary-container/25 border border-secondary-container" id="bulk-actions-bar">
+      <span class="font-label-sm text-label-sm font-semibold text-on-surface"><strong id="bulk-count">0</strong> pedido(s) seleccionado(s)</span>
+      <div class="flex items-center gap-space-xs">
+        <button class="inline-flex items-center gap-1 px-space-sm py-1 rounded-lg bg-surface-container-lowest text-on-surface font-label-sm text-label-sm font-semibold shadow-sm hover:bg-surface-container-high transition-colors" id="bulk-export-btn" type="button">
+          <span class="material-symbols-outlined text-[16px]">ios_share</span> Exportar seleccionados (Excel)
+        </button>
+        <button class="inline-flex items-center gap-1 px-space-sm py-1 rounded-lg bg-surface-container-lowest text-on-surface-variant font-label-sm text-label-sm font-semibold shadow-sm hover:bg-surface-container-high transition-colors" id="bulk-clear-btn" type="button">
+          <span class="material-symbols-outlined text-[16px]">close</span> Limpiar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="w-full overflow-x-auto">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-high/60 text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+          <th class="py-space-md px-space-md font-bold w-10"><input type="checkbox" id="select-all-rows" title="Seleccionar todos los pedidos filtrados"></th>
+          <th class="py-space-md px-space-md font-bold">Fecha Creación / Bodega</th>
+          <th class="py-space-md px-space-md font-bold">BPCS / Documento</th>
+          <th class="py-space-md px-space-md font-bold">Destinatario</th>
+          <th class="py-space-md px-space-md font-bold text-right">Líneas</th>
+          <th class="py-space-md px-space-md font-bold text-right">Unidades</th>
+          <th class="py-space-md px-space-md font-bold text-center">Estatus</th>
+          <th class="py-space-md px-space-md font-bold text-right">Acción</th>
+        </tr>
+      </thead>
+      <tbody id="table-body" class="divide-y divide-surface-container-low font-body-sm text-body-sm text-on-surface"></tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="p-space-md bg-surface-container-lowest border-t border-surface-container-high flex flex-col sm:flex-row items-center justify-between gap-space-md">
+    <div class="flex items-center gap-space-md">
+      <span class="font-label-sm text-label-sm text-on-surface-variant" id="table-summary">Cargando datos...</span>
+    </div>
+    <div class="flex items-center gap-space-sm">
+      <div class="flex items-center gap-1" id="pagination-buttons"></div>
+      <div class="h-4 w-px bg-outline-variant/40 hidden sm:block"></div>
+      <select id="page-size" class="bg-surface-container-low text-on-surface text-[12px] font-semibold py-1 px-2 rounded focus:outline-none cursor-pointer">
+        <option value="10">10 por página</option>
+        <option value="25">25 por página</option>
+        <option value="50">50 por página</option>
+      </select>
+    </div>
+  </div>
+</section>
+
+</div>
+</div>
+
+<!-- ==================== VISTA: MONITOREO DE INCIDENCIAS ==================== -->
+<div id="view-incidencias" class="hidden w-full flex-col">
+  <section class="w-full px-margin py-space-md bg-surface-container-lowest shadow-sm">
+    <div class="flex flex-col gap-space-xs">
+      <span class="font-headline-md text-headline-md font-bold text-on-surface">Monitoreo de Incidencias</span>
+      <span class="font-body-sm text-body-sm text-on-surface-variant">Solo líneas reportadas con Faltante, Sobrante o Mal Estado. Da seguimiento al estado de la incidencia hasta que quede resuelta.</span>
+    </div>
+  </section>
+
+  <div class="w-full px-margin py-space-lg flex flex-col gap-space-lg">
+    <!-- Resumen de incidencias por estado de seguimiento -->
+    <section class="grid grid-cols-1 sm:grid-cols-3 gap-space-lg">
+      <div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-1.5 h-full bg-error"></div>
+        <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Pendientes</span>
+        <div class="font-metric-headline text-metric-headline font-bold text-on-surface" id="inc-count-pendiente">0</div>
+      </div>
+      <div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-1.5 h-full bg-amber-500"></div>
+        <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">En Curso</span>
+        <div class="font-metric-headline text-metric-headline font-bold text-on-surface" id="inc-count-encurso">0</div>
+      </div>
+      <div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-1.5 h-full bg-on-tertiary-container"></div>
+        <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Cerradas</span>
+        <div class="font-metric-headline text-metric-headline font-bold text-on-surface" id="inc-count-cerrado">0</div>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-1 sm:grid-cols-3 gap-space-lg">
+      <div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-1.5 h-full bg-error"></div>
+        <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Incidencias que Proceden</span>
+        <div class="font-metric-headline text-metric-headline font-bold text-error" id="inc-count-procede">0</div>
+        <span class="font-body-sm text-body-sm text-on-surface-variant">Veredicto confirma Faltante, Sobrante o Mal Estado</span>
+      </div>
+      <div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-1.5 h-full bg-on-tertiary-container"></div>
+        <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Incidencias que No Proceden</span>
+        <div class="font-metric-headline text-metric-headline font-bold text-on-tertiary-container" id="inc-count-noprocede">0</div>
+        <span class="font-body-sm text-body-sm text-on-surface-variant">Veredicto = Conforme (el reclamo no se sostuvo)</span>
+      </div>
+      <div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-1.5 h-full bg-outline"></div>
+        <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Sin Resolver Aún</span>
+        <div class="font-metric-headline text-metric-headline font-bold text-on-surface" id="inc-count-sinresolver">0</div>
+        <span class="font-body-sm text-body-sm text-on-surface-variant">Todavía sin Veredicto asignado</span>
+      </div>
+    </section>
+
+    <!-- Filtros propios de esta vista -->
+    <section class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col">
+      <div class="p-space-lg bg-surface-container-low flex flex-col gap-space-md">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-sm">
+          <div class="relative flex items-center">
+            <span class="material-symbols-outlined absolute left-3 text-[18px] text-on-surface-variant">search</span>
+            <input id="inc-search" class="w-full pl-9 pr-3 py-2 bg-surface-container-lowest rounded-lg font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none shadow-sm" placeholder="Buscar por Pedido, Documento, Código..." type="text">
+          </div>
+          <div class="relative flex items-center">
+            <span class="material-symbols-outlined absolute left-3 text-[18px] text-on-surface-variant">report</span>
+            <select id="inc-filter-tipo" class="w-full pl-9 pr-8 py-2 bg-surface-container-lowest rounded-lg font-label-md text-label-md text-on-surface focus:outline-none shadow-sm cursor-pointer appearance-none">
+              <option value="all">Tipo: Todos (Faltante/Sobrante/Mal Estado)</option>
+              <option value="Faltante">Faltante</option>
+              <option value="Sobrante">Sobrante</option>
+              <option value="Mal Estado">Mal Estado</option>
+            </select>
+          </div>
+          <div class="relative flex items-center">
+            <span class="material-symbols-outlined absolute left-3 text-[18px] text-on-surface-variant">pending_actions</span>
+            <select id="inc-filter-estado" class="w-full pl-9 pr-8 py-2 bg-surface-container-lowest rounded-lg font-label-md text-label-md text-on-surface focus:outline-none shadow-sm cursor-pointer appearance-none">
+              <option value="all">Estado Incidencia: Todos</option>
+              <option value="Pendiente">Pendiente</option>
+              <option value="En Curso">En Curso</option>
+              <option value="Cerrado">Cerrado</option>
+              <option value="(vacio)">Sin estado asignado</option>
+            </select>
+          </div>
+          <div class="relative flex items-center">
+            <span class="material-symbols-outlined absolute left-3 text-[18px] text-on-surface-variant">gavel</span>
+            <select id="inc-filter-veredicto" class="w-full pl-9 pr-8 py-2 bg-surface-container-lowest rounded-lg font-label-md text-label-md text-on-surface focus:outline-none shadow-sm cursor-pointer appearance-none">
+              <option value="all">Veredicto: Todos</option>
+              <option value="(vacio)">Sin resolver</option>
+              <option value="Conforme">Conforme (No Procede)</option>
+              <option value="Faltante">Faltante (Procede)</option>
+              <option value="Sobrante">Sobrante (Procede)</option>
+              <option value="Mal Estado">Mal Estado (Procede)</option>
+            </select>
+          </div>
+          <button id="inc-clear-filters" class="inline-flex items-center justify-center gap-1 px-space-md py-2 rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md font-semibold shadow-sm hover:bg-surface-container-high transition-colors" type="button">
+            <span class="material-symbols-outlined text-[16px]">filter_alt_off</span> Restablecer
+          </button>
+        </div>
+        <div class="flex justify-end">
+          <button id="inc-export-xlsx-btn" class="inline-flex items-center gap-1 px-space-md py-2 rounded-lg bg-primary-container text-on-primary font-label-md text-label-md font-bold shadow-sm hover:opacity-90 transition-opacity" type="button">
+            <span class="material-symbols-outlined text-[18px]">ios_share</span> Exportar Excel
+          </button>
+        </div>
+        <div class="hidden items-center justify-between gap-space-sm px-space-md py-space-xs rounded-lg bg-secondary-container/25 border border-secondary-container" id="inc-bulk-bar">
+          <span class="font-label-sm text-label-sm font-semibold text-on-surface"><strong id="inc-bulk-count">0</strong> incidencia(s) seleccionada(s)</span>
+          <div class="flex items-center gap-space-xs">
+            <button id="inc-bulk-export-btn" class="inline-flex items-center gap-1 px-space-sm py-1 rounded-lg bg-surface-container-lowest text-on-surface font-label-sm text-label-sm font-semibold shadow-sm hover:bg-surface-container-high transition-colors" type="button">
+              <span class="material-symbols-outlined text-[16px]">ios_share</span> Exportar seleccionadas (Excel)
+            </button>
+            <button id="inc-bulk-clear-btn" class="inline-flex items-center gap-1 px-space-sm py-1 rounded-lg bg-surface-container-lowest text-on-surface-variant font-label-sm text-label-sm font-semibold shadow-sm hover:bg-surface-container-high transition-colors" type="button">
+              <span class="material-symbols-outlined text-[16px]">close</span> Limpiar
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="w-full overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-surface-container-high/60 text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+              <th class="py-space-md px-space-md font-bold w-10"><input type="checkbox" id="inc-select-all"></th>
+              <th class="py-space-md px-space-md font-bold">Fecha / BPCS / Documento</th>
+              <th class="py-space-md px-space-md font-bold">Destinatario</th>
+              <th class="py-space-md px-space-md font-bold">Código / Descripción</th>
+              <th class="py-space-md px-space-md font-bold text-center">Estatus Reportado</th>
+              <th class="py-space-md px-space-md font-bold">Veredicto</th>
+              <th class="py-space-md px-space-md font-bold">Observación / Personal</th>
+              <th class="py-space-md px-space-md font-bold text-right">Cantidad Observada</th>
+              <th class="py-space-md px-space-md font-bold">Estado de la Incidencia</th>
+              <th class="py-space-md px-space-md font-bold">Fecha de Estado</th>
+              <th class="py-space-md px-space-md font-bold text-right">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="inc-tbody" class="divide-y divide-surface-container-low font-body-sm text-body-sm text-on-surface"></tbody>
+        </table>
+      </div>
+      <div class="p-space-md bg-surface-container-lowest border-t border-surface-container-high">
+        <span class="font-label-sm text-label-sm text-on-surface-variant" id="inc-summary">Mostrando 0 incidencias</span>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ==================== VISTA: CUADROS RESUMEN ==================== -->
+<div id="view-resumen" class="hidden w-full flex-col">
+  <section class="w-full px-margin py-space-md bg-surface-container-lowest shadow-sm">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-sm">
+      <div class="flex flex-col gap-space-xs">
+        <span class="font-headline-md text-headline-md font-bold text-on-surface">Cuadros Resumen</span>
+        <span class="font-body-sm text-body-sm text-on-surface-variant">Consolidado mensual de cumplimiento, desglosado por tipo de incidencia, bodega y veredicto. Usa el filtro de Bodega de la cabecera si quieres acotarlo.</span>
+      </div>
+      <button id="res-export-xlsx-btn" class="inline-flex items-center gap-1 px-space-md py-2 rounded-lg bg-primary-container text-on-primary font-label-md text-label-md font-bold shadow-sm hover:opacity-90 transition-opacity shrink-0" type="button">
+        <span class="material-symbols-outlined text-[18px]">ios_share</span> Exportar Cuadros (Excel)
+      </button>
+    </div>
+  </section>
+
+  <div class="w-full px-margin py-space-lg flex flex-col gap-space-xl">
+
+    <!-- Cuadro 1: Resumen Mensual General -->
+    <section class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm">
+      <span class="font-headline-md text-headline-md font-bold text-on-surface">Resumen Mensual de Cumplimiento</span>
+      <p class="font-body-sm text-body-sm text-on-surface-variant">Pedidos únicos (BPCS) solicitados por mes vs. pedidos con alguna incidencia (Faltante, Sobrante o Mal Estado, ya con veredicto aplicado si existe).</p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse" id="tbl-resumen-mensual">
+          <thead>
+            <tr class="bg-surface-container-high text-on-surface font-label-sm text-label-sm uppercase tracking-wider">
+              <th class="py-space-sm px-space-md font-bold text-center">N°</th>
+              <th class="py-space-sm px-space-md font-bold">Mes</th>
+              <th class="py-space-sm px-space-md font-bold text-right">Pedidos Solicitados</th>
+              <th class="py-space-sm px-space-md font-bold text-right">Incidencia</th>
+              <th class="py-space-sm px-space-md font-bold text-right">% Cumplimiento</th>
+            </tr>
+          </thead>
+          <tbody id="tbl-resumen-mensual-body" class="divide-y divide-surface-container-low font-body-sm text-body-sm text-on-surface"></tbody>
+          <tfoot>
+            <tr class="font-bold bg-surface-container-low">
+              <td class="py-space-sm px-space-md" colspan="2">Total / Promedio Ponderado</td>
+              <td class="py-space-sm px-space-md text-right" id="tbl-resumen-mensual-total-sol">0</td>
+              <td class="py-space-sm px-space-md text-right" id="tbl-resumen-mensual-total-inc">0</td>
+              <td class="py-space-sm px-space-md text-right" id="tbl-resumen-mensual-total-pct">0%</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+
+    <!-- Cuadro 2: Resumen Mensual por Tipo de Incidencia -->
+    <section class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm">
+      <span class="font-headline-md text-headline-md font-bold text-on-surface">Resumen Mensual por Tipo de Incidencia</span>
+      <p class="font-body-sm text-body-sm text-on-surface-variant">Cada pedido se clasifica en un solo tipo (el más grave de sus líneas), por eso Faltante + Sobrante + Mal Estado = la columna "Incidencia" del cuadro anterior.</p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse" id="tbl-resumen-tipo">
+          <thead>
+            <tr class="bg-surface-container-high text-on-surface font-label-sm text-label-sm uppercase tracking-wider">
+              <th class="py-space-sm px-space-md font-bold text-center">N°</th>
+              <th class="py-space-sm px-space-md font-bold">Mes</th>
+              <th class="py-space-sm px-space-md font-bold text-right">Pedidos Solicitados</th>
+              <th class="py-space-sm px-space-md font-bold text-right text-error">Faltante</th>
+              <th class="py-space-sm px-space-md font-bold text-right text-secondary">Sobrante</th>
+              <th class="py-space-sm px-space-md font-bold text-right text-amber-600">Mal Estado</th>
+              <th class="py-space-sm px-space-md font-bold text-right">% Cumplimiento</th>
+            </tr>
+          </thead>
+          <tbody id="tbl-resumen-tipo-body" class="divide-y divide-surface-container-low font-body-sm text-body-sm text-on-surface"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Cuadro 3: Resumen por Bodega -->
+    <section class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm">
+      <span class="font-headline-md text-headline-md font-bold text-on-surface">Resumen por Bodega</span>
+      <p class="font-body-sm text-body-sm text-on-surface-variant">El mismo desglose, pero comparando bodegas en vez de meses (sobre todo el histórico filtrado).</p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse" id="tbl-resumen-bodega">
+          <thead>
+            <tr class="bg-surface-container-high text-on-surface font-label-sm text-label-sm uppercase tracking-wider">
+              <th class="py-space-sm px-space-md font-bold text-center">N°</th>
+              <th class="py-space-sm px-space-md font-bold">Bodega</th>
+              <th class="py-space-sm px-space-md font-bold text-right">Pedidos Solicitados</th>
+              <th class="py-space-sm px-space-md font-bold text-right text-error">Faltante</th>
+              <th class="py-space-sm px-space-md font-bold text-right text-secondary">Sobrante</th>
+              <th class="py-space-sm px-space-md font-bold text-right text-amber-600">Mal Estado</th>
+              <th class="py-space-sm px-space-md font-bold text-right">% Cumplimiento</th>
+            </tr>
+          </thead>
+          <tbody id="tbl-resumen-bodega-body" class="divide-y divide-surface-container-low font-body-sm text-body-sm text-on-surface"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Cuadro 4: Resumen de Veredictos por Mes -->
+    <section class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm">
+      <span class="font-headline-md text-headline-md font-bold text-on-surface">Resumen de Veredictos por Mes</span>
+      <p class="font-body-sm text-body-sm text-on-surface-variant">De las incidencias reportadas cada mes (por fecha de reporte), cuántas ya se investigaron y si procedían o no.</p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse" id="tbl-resumen-veredicto">
+          <thead>
+            <tr class="bg-surface-container-high text-on-surface font-label-sm text-label-sm uppercase tracking-wider">
+              <th class="py-space-sm px-space-md font-bold text-center">N°</th>
+              <th class="py-space-sm px-space-md font-bold">Mes</th>
+              <th class="py-space-sm px-space-md font-bold text-right">Incidencias Reportadas</th>
+              <th class="py-space-sm px-space-md font-bold text-right text-error">Proceden</th>
+              <th class="py-space-sm px-space-md font-bold text-right text-on-tertiary-container">No Proceden</th>
+              <th class="py-space-sm px-space-md font-bold text-right text-outline">Sin Resolver</th>
+            </tr>
+          </thead>
+          <tbody id="tbl-resumen-veredicto-body" class="divide-y divide-surface-container-low font-body-sm text-body-sm text-on-surface"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- ==================== VISTA: REPORTE DE INVENTARIOS ==================== -->
+<div id="view-inventario" class="hidden w-full flex-col">
+  <section class="w-full px-margin py-space-md bg-surface-container-lowest shadow-sm">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-sm">
+      <div class="flex flex-col gap-space-xs">
+        <span class="font-headline-md text-headline-md font-bold text-on-surface">Reporte de Inventarios</span>
+        <span class="font-body-sm text-body-sm text-on-surface-variant" id="inv-subtitle">Saldo de almacén filtrado solo a los códigos con una incidencia todavía abierta (no Cerrada).</span>
+      </div>
+      <div class="flex items-center gap-space-sm shrink-0">
+        <button id="inv-refresh-btn" class="inline-flex items-center gap-1 px-space-md py-2 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-label-md font-bold shadow-sm transition-colors" type="button">
+          <span class="material-symbols-outlined text-[18px]" id="inv-refresh-icon">sync</span> Actualizar Saldo
+        </button>
+        <button id="inv-export-xlsx-btn" class="inline-flex items-center gap-1 px-space-md py-2 rounded-lg bg-primary-container text-on-primary font-label-md text-label-md font-bold shadow-sm hover:opacity-90 transition-opacity" type="button">
+          <span class="material-symbols-outlined text-[18px]">ios_share</span> Exportar Detalle (Excel)
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <div class="w-full px-margin py-space-lg flex flex-col gap-space-lg">
+    <section class="grid grid-cols-1 sm:grid-cols-3 gap-space-lg">
+      <div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-1.5 h-full bg-error"></div>
+        <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Códigos con Incidencia Abierta</span>
+        <div class="font-metric-headline text-metric-headline font-bold text-on-surface" id="inv-count-codigos">0</div>
+      </div>
+      <div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-1.5 h-full bg-secondary"></div>
+        <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Filas de Saldo Encontradas</span>
+        <div class="font-metric-headline text-metric-headline font-bold text-on-surface" id="inv-count-filas">0</div>
+      </div>
+      <div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-1.5 h-full bg-on-tertiary-container"></div>
+        <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Cantidad Total en Saldo</span>
+        <div class="font-metric-headline text-metric-headline font-bold text-on-surface" id="inv-count-cantidad">0</div>
+      </div>
+    </section>
+
+    <section class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm">
+      <span class="font-headline-md text-headline-md font-bold text-on-surface">Detalle por Código</span>
+      <p class="font-body-sm text-body-sm text-on-surface-variant">Agrupado por código, con subtotal de Cantidad al cierre de cada grupo. La columna "Conteo" viene en blanco para anotar el conteo físico.</p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse border border-outline-variant/40" id="tbl-inventario">
+          <thead>
+            <tr class="bg-surface-container-high text-on-surface font-label-sm text-label-sm uppercase tracking-wider">
+              <th class="py-space-sm px-space-md font-bold border border-outline-variant/40">Bodega (WHS)</th>
+              <th class="py-space-sm px-space-md font-bold border border-outline-variant/40">Código</th>
+              <th class="py-space-sm px-space-md font-bold border border-outline-variant/40">Descripción</th>
+              <th class="py-space-sm px-space-md font-bold border border-outline-variant/40">Lote</th>
+              <th class="py-space-sm px-space-md font-bold border border-outline-variant/40">Ubicación</th>
+              <th class="py-space-sm px-space-md font-bold text-right border border-outline-variant/40">Cantidad</th>
+              <th class="py-space-sm px-space-md font-bold text-center border border-outline-variant/40">Conteo</th>
+            </tr>
+          </thead>
+          <tbody id="tbl-inventario-body" class="font-body-sm text-body-sm text-on-surface"></tbody>
+        </table>
+      </div>
+      <p id="inv-empty-msg" class="hidden font-body-sm text-body-sm text-on-surface-variant text-center py-space-lg">No hay códigos con incidencias abiertas en este momento — o el Sheet de saldo aún no ha cargado.</p>
+    </section>
+  </div>
+</div>
+
+</main>
+
+<!-- ============================= FOOTER ============================= -->
+<footer class="w-full bg-surface-container-lowest border-t border-outline-variant/30 py-space-lg">
+  <div class="w-full px-margin flex flex-col sm:flex-row items-center justify-between gap-space-md">
+    <div class="flex items-center gap-space-sm">
+      <span class="font-label-sm text-label-sm font-bold text-on-surface tracking-wider uppercase">OSAWMS</span>
+      <span class="text-outline-variant font-label-sm">•</span>
+      <span class="font-body-sm text-body-sm text-on-surface-variant">Control de Pedidos - Tablero OTIF Kamill</span>
+    </div>
+    <div class="flex items-center gap-space-lg">
+      <span class="font-label-sm text-label-sm text-on-surface-variant">Última sincronización: <strong class="text-on-surface font-semibold" id="footer-sync-time">-</strong></span>
+    </div>
+  </div>
+</footer>
+
+<!-- ============================ MODAL EDICIÓN ============================ -->
+<div id="edit-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/40 p-4">
+  <div class="bg-surface-container-lowest rounded-xl shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div class="p-space-lg border-b border-outline-variant/30 flex items-center justify-between sticky top-0 bg-surface-container-lowest z-10">
+      <div>
+        <h3 class="font-headline-md text-headline-md font-bold text-on-surface">Editar Pedido</h3>
+        <p id="modal-subtitle" class="font-body-sm text-body-sm text-on-surface-variant"></p>
+      </div>
+      <button id="modal-close" class="p-1 rounded hover:bg-surface-container-high text-on-surface-variant" type="button">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="relative">
+    <div id="modal-lock-overlay" class="absolute inset-0 z-20 bg-white/95 backdrop-blur-sm flex items-center justify-center p-space-lg">
+      <div class="flex flex-col items-center gap-space-sm text-center max-w-xs">
+        <span class="material-symbols-outlined text-[40px] text-on-surface-variant">lock</span>
+        <span class="font-headline-md text-headline-md font-bold text-on-surface">Ventana bloqueada</span>
+        <p class="font-body-sm text-body-sm text-on-surface-variant">Ingresa la clave para poder ver y editar los campos de este pedido.</p>
+        <input id="modal-lock-password" type="password" placeholder="Clave de acceso..." class="w-full px-space-md py-2 bg-surface-container-low rounded-lg focus:outline-none text-center">
+        <span id="modal-lock-error" class="text-[12px] text-error font-semibold hidden">Clave incorrecta.</span>
+        <button id="modal-lock-btn" type="button" class="mt-1 w-full px-space-lg py-2 rounded-lg bg-primary-container text-on-primary font-label-md text-label-md font-bold shadow-sm">Desbloquear</button>
+      </div>
+    </div>
+    <div class="p-space-lg flex flex-col gap-space-md">
+
+      <!-- SEGMENTO 1: LO QUE REPORTA EL CLIENTE -->
+      <div class="rounded-lg border border-sky-200 bg-sky-50 p-space-md flex flex-col gap-space-md">
+        <span class="font-label-sm text-label-sm font-bold uppercase tracking-wider text-sky-700 flex items-center gap-1">
+          <span class="material-symbols-outlined text-[16px]">person</span> Reporte del Cliente
+        </span>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+          <label class="flex flex-col gap-1">
+            <span class="font-label-sm text-label-sm font-semibold text-on-surface-variant uppercase">Fecha</span>
+            <input id="f-fecha" type="date" class="px-space-md py-2 bg-white rounded-lg focus:outline-none border border-sky-200">
+          </label>
+          <label class="flex flex-col gap-1">
+            <span class="font-label-sm text-label-sm font-semibold text-on-surface-variant uppercase">Estatus</span>
+            <select id="f-estatus" class="px-space-md py-2 bg-white rounded-lg focus:outline-none border border-sky-200">
+              <option value="">Sin Evaluar</option>
+              <option value="Conforme">Conforme</option>
+              <option value="Faltante">Faltante</option>
+              <option value="Sobrante">Sobrante</option>
+              <option value="Mal Estado">Mal Estado</option>
+            </select>
+          </label>
+        </div>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm font-semibold text-on-surface-variant uppercase">Observación</span>
+          <textarea id="f-observacion" rows="2" class="px-space-md py-2 bg-white rounded-lg focus:outline-none border border-sky-200"></textarea>
+        </label>
+        <label class="flex flex-col gap-1 sm:w-1/2">
+          <span class="font-label-sm text-label-sm font-semibold text-on-surface-variant uppercase">Cantidad Observada</span>
+          <input id="f-cantidad" type="number" step="1" class="px-space-md py-2 bg-white rounded-lg focus:outline-none border border-sky-200">
+        </label>
+      </div>
+
+      <!-- SEGMENTO 2: LO QUE INDICA DESPACHO -->
+      <div class="rounded-lg border border-amber-200 bg-amber-50 p-space-md flex flex-col gap-space-md">
+        <span class="font-label-sm text-label-sm font-bold uppercase tracking-wider text-amber-700 flex items-center gap-1">
+          <span class="material-symbols-outlined text-[16px]">local_shipping</span> Respuesta de Despacho
+        </span>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+          <label class="flex flex-col gap-1">
+            <span class="font-label-sm text-label-sm font-semibold text-on-surface-variant uppercase">Fecha de Respuesta</span>
+            <input id="f-fecharesp" type="date" class="px-space-md py-2 bg-white rounded-lg focus:outline-none border border-amber-200">
+          </label>
+          <label class="flex flex-col gap-1">
+            <span class="font-label-sm text-label-sm font-semibold text-on-surface-variant uppercase">Personal que Reporta</span>
+            <input id="f-personal" type="text" class="px-space-md py-2 bg-white rounded-lg focus:outline-none border border-amber-200">
+          </label>
+        </div>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm font-semibold text-on-surface-variant uppercase">Respuesta Despacho</span>
+          <textarea id="f-respdespacho" rows="2" class="px-space-md py-2 bg-white rounded-lg focus:outline-none border border-amber-200"></textarea>
+        </label>
+      </div>
+
+      <!-- SEGMENTO 3: LO QUE INDICA ALMACÉN -->
+      <div class="rounded-lg border border-emerald-200 bg-emerald-50 p-space-md flex flex-col gap-space-md">
+        <span class="font-label-sm text-label-sm font-bold uppercase tracking-wider text-emerald-700 flex items-center gap-1">
+          <span class="material-symbols-outlined text-[16px]">warehouse</span> Respuesta de Almacén
+        </span>
+        <label class="flex flex-col gap-1 sm:w-1/2">
+          <span class="font-label-sm text-label-sm font-semibold text-on-surface-variant uppercase">Fecha Almacén</span>
+          <input id="f-fechaalmacen" type="date" class="px-space-md py-2 bg-white rounded-lg focus:outline-none border border-emerald-200">
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm font-semibold text-on-surface-variant uppercase">Respuesta de Almacén</span>
+          <textarea id="f-respalmacen" rows="2" class="px-space-md py-2 bg-white rounded-lg focus:outline-none border border-emerald-200"></textarea>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm font-semibold text-on-surface-variant uppercase">Acciones Tomadas</span>
+          <textarea id="f-acciones" rows="2" class="px-space-md py-2 bg-white rounded-lg focus:outline-none border border-emerald-200"></textarea>
+        </label>
+      </div>
+
+    </div>
+    </div>
+    <div class="p-space-lg border-t border-outline-variant/30 flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm sticky bottom-0 bg-surface-container-lowest">
+      <div class="flex flex-col gap-1">
+        <span id="save-status" class="font-label-sm text-label-sm text-on-surface-variant"></span>
+        <div class="flex items-center gap-space-xs" id="edit-password-wrap">
+          <span class="material-symbols-outlined text-[16px] text-on-surface-variant">lock</span>
+          <input id="edit-password" type="password" placeholder="Clave para guardar cambios..." class="px-space-sm py-1.5 bg-surface-container-low rounded-lg text-body-sm focus:outline-none w-56">
+        </div>
+      </div>
+      <div class="flex items-center gap-space-sm">
+        <button id="modal-cancel" class="px-space-lg py-2 rounded-lg bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold" type="button">Cancelar</button>
+        <button id="modal-save" class="px-space-lg py-2 rounded-lg bg-primary-container text-on-primary font-label-md text-label-md font-bold shadow-sm" type="button">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ MODAL: DECLARAR LÍNEA NO SOLICITADA (SOBRANTE) ============================ -->
+<div id="add-line-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/40 p-4">
+  <div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div class="p-space-lg border-b border-outline-variant/30 flex items-center justify-between sticky top-0 bg-surface-container-lowest z-10">
+      <div class="flex flex-col">
+        <span class="font-headline-md text-headline-md font-bold text-on-surface">Declarar Línea No Solicitada</span>
+        <span class="font-body-sm text-body-sm text-on-surface-variant" id="addline-subtitle">BPCS -- • Documento -- • Destinatario --</span>
+      </div>
+      <button id="addline-close-btn" class="p-1.5 rounded-lg hover:bg-surface-container-high text-on-surface-variant transition-colors" type="button">
+        <span class="material-symbols-outlined text-[22px]">close</span>
+      </button>
+    </div>
+    <div class="p-space-lg flex flex-col gap-space-md">
+      <div class="rounded-lg border border-amber-200 bg-amber-50 p-space-md flex items-start gap-space-sm">
+        <span class="material-symbols-outlined text-amber-600 text-[20px] shrink-0">warning</span>
+        <p class="text-body-sm text-amber-800">Este código llegó pero <strong>no estaba en el detalle original del pedido</strong>. Se creará como línea nueva con <strong>Unidades Solicitadas = 0</strong> y <strong>Estatus = Sobrante</strong>.</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm font-semibold text-on-surface-variant uppercase">Código *</span>
+          <input id="al-codigo" type="text" class="px-space-md py-2 bg-surface-container-low rounded-lg focus:outline-none">
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm font-semibold text-on-surface-variant uppercase">EAN 13</span>
+          <input id="al-ean" type="text" class="px-space-md py-2 bg-surface-container-low rounded-lg focus:outline-none">
+        </label>
+      </div>
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm font-semibold text-on-surface-variant uppercase">Descripción *</span>
+        <input id="al-descripcion" type="text" class="px-space-md py-2 bg-surface-container-low rounded-lg focus:outline-none">
+      </label>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm font-semibold text-on-surface-variant uppercase">Unidades Solicitadas</span>
+          <input type="text" value="0 (no estaba en el pedido)" disabled class="px-space-md py-2 bg-surface-container-high rounded-lg text-on-surface-variant">
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm font-semibold text-on-surface-variant uppercase">Cantidad Recibida de Más *</span>
+          <input id="al-cantidad" type="number" step="1" min="1" class="px-space-md py-2 bg-surface-container-low rounded-lg focus:outline-none">
+        </label>
+      </div>
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm font-semibold text-on-surface-variant uppercase">Observación</span>
+        <textarea id="al-observacion" rows="2" class="px-space-md py-2 bg-surface-container-low rounded-lg focus:outline-none"></textarea>
+      </label>
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm font-semibold text-on-surface-variant uppercase">Personal que Reporta</span>
+        <input id="al-personal" type="text" class="px-space-md py-2 bg-surface-container-low rounded-lg focus:outline-none">
+      </label>
+    </div>
+    <div class="p-space-lg border-t border-outline-variant/30 flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm sticky bottom-0 bg-surface-container-lowest">
+      <div class="flex flex-col gap-1">
+        <span id="addline-status" class="font-label-sm text-label-sm text-on-surface-variant"></span>
+        <div class="flex items-center gap-space-xs">
+          <span class="material-symbols-outlined text-[16px] text-on-surface-variant">lock</span>
+          <input id="al-password" type="password" placeholder="Clave para guardar..." class="px-space-sm py-1.5 bg-surface-container-low rounded-lg text-body-sm focus:outline-none w-56">
+        </div>
+      </div>
+      <div class="flex items-center gap-space-sm">
+        <button id="addline-cancel" class="px-space-lg py-2 rounded-lg bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold" type="button">Cancelar</button>
+        <button id="addline-save" class="px-space-lg py-2 rounded-lg bg-primary-container text-on-primary font-label-md text-label-md font-bold shadow-sm" type="button">Declarar Línea</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ TOAST FLOTANTE ============================ -->
+<div id="live-toast" class="fixed bottom-6 right-6 z-[110] transform translate-y-16 opacity-0 transition-all duration-300 pointer-events-none">
+  <div class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary rounded-xl shadow-xl border border-secondary-container/20">
+    <div class="w-2.5 h-2.5 rounded-full bg-tertiary-fixed animate-ping shrink-0"></div>
+    <div class="flex flex-col">
+      <span class="font-label-md text-xs font-bold text-on-primary" id="toast-title">Listo</span>
+      <span class="text-[11px] text-primary-fixed" id="toast-message">Acción completada</span>
+    </div>
+    <button class="ml-2 text-primary-fixed hover:text-white pointer-events-auto" onclick="hideToast()" type="button">
+      <span class="material-symbols-outlined text-[16px]">close</span>
+    </button>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   CONFIGURACIÓN - EDITA ESTOS DOS VALORES
+   ========================================================================= */
+const CONFIG = {
+  CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRknwbWoamDOkrY1NP6kRoXUwdRNSvyf5WgCzrjqO-Pu2kTYLwJUkqSGucMASROpVpUyHYQ7ucRtgsu/pub?gid=0&single=true&output=csv",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwfuJ3yPQFO4Mm4VflGm0hZpSoJQI8zBdxladbShdJd6BJvFSQk65ApR1VtaHJq3r1N/exec",
+  INVENTARIO_CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vREnptY5onM9KVFslXKx_3aFSaLIVBgNSZxcMKiiZ6WpgxACTSoxnyhyGS8784QjaDcIwDS5szwIXs4/pub?gid=273620597&single=true&output=csv",
+  META_CONFORME: 95    // % meta de conformidad, usado en el gráfico y la tarjeta KPI
+};
+
+// Mapa de encabezados del Sheet de SALDO DE ALMACÉN (archivo distinto, solo lectura).
+const INVENTARIO_HEADER_MAP = {
+  "ID SALDO": "ID_SALDO",
+  "WHS": "WHS",
+  "UBICACIÓN": "UBICACION",
+  "UBICACION": "UBICACION",
+  "CODIGO": "CODIGO",
+  "DESC": "DESCRIPCION",
+  "LOTE BPCS": "LOTE_BPCS",
+  "LOTE FISICO": "LOTE_FISICO",
+  "EXPIRA": "EXPIRA",
+  "FAMILIA": "FAMILIA",
+  "SALDO": "SALDO"
+};
+let INVENTARIO_ROWS = [];
+let inventarioCargado = false;
+
+// Mapea el TEXTO EXACTO del encabezado en el Sheet -> clave interna que usa el dashboard.
+// Si agregas una columna nueva al Sheet, agrégala aquí también (en cualquier posición).
+const HEADER_MAP = {
+  "ID_PEDIDO": "ID_PEDIDO",
+  "FECHA DE CREACION": "FECHA_CREACION",
+  "PEDIDO BPCS": "PEDIDO_BPCS",
+  "BODEGA": "BODEGA",
+  "DOCUMENTO": "DOCUMENTO",
+  "DESTINATARIO": "DESTINATARIO",
+  "CODIGO": "CODIGO",
+  "DESCRIPCION": "DESCRIPCION",
+  "UNIDADES": "UNIDADES",
+  "EAN 13": "EAN13",
+  "ESTATUS": "ESTATUS",
+  "FECHA": "FECHA",
+  "OBSERVACION": "OBSERVACION",
+  "CANTIDAD OBSERVADA": "CANTIDAD_OBSERVADA",
+  "FECHA DE RESPUESTA": "FECHA_RESPUESTA",
+  "RESPUESTA DESPACHO": "RESPUESTA_DESPACHO",
+  "PERSONAL QUE REPORTA": "PERSONAL_REPORTA",
+  "FECHA ALMACEN": "FECHA_ALMACEN",
+  "RESPUESTA DE ALMACEN": "RESPUESTA_ALMACEN",
+  "ACCIONES TOMADAS": "ACCIONES_TOMADAS",
+  "ESTADO INCIDENCIA": "ESTADO_INCIDENCIA",
+  "FECHA DE ESTADO": "FECHA_ESTADO",
+  "VEREDICTO": "VEREDICTO"
+};
+
+let ROWS = [];
+let currentEditRow = null;
+let currentPage = 1;
+let pageSize = 10;
+let selectedRows = new Set(); // guarda _sheetRow de los pedidos seleccionados
+
+/* ---------- Toast utilitario ---------- */
+let toastTimeoutId = null;
+function showToast(title, message) {
+  const toast = document.getElementById("live-toast");
+  if (!toast) return;
+  document.getElementById("toast-title").textContent = title;
+  document.getElementById("toast-message").textContent = message;
+  toast.classList.remove("translate-y-16", "opacity-0", "pointer-events-none");
+  toast.classList.add("translate-y-0", "opacity-100", "pointer-events-auto");
+  clearTimeout(toastTimeoutId);
+  toastTimeoutId = setTimeout(hideToast, 3500);
+}
+function hideToast() {
+  const toast = document.getElementById("live-toast");
+  if (!toast) return;
+  toast.classList.add("translate-y-16", "opacity-0", "pointer-events-none");
+  toast.classList.remove("translate-y-0", "opacity-100", "pointer-events-auto");
+}
+
+/* ---------- CSV parsing (soporta comillas y comas dentro de campos) ---------- */
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = "", inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i], next = text[i+1];
+    if (inQuotes) {
+      if (c === '"' && next === '"') { field += '"'; i++; }
+      else if (c === '"') { inQuotes = false; }
+      else { field += c; }
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ',') { row.push(field); field = ""; }
+      else if (c === '\r') { /* ignore */ }
+      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ""; }
+      else field += c;
+    }
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(c => c !== ""));
+}
+
+function fmtDateInput(v) {
+  if (!v) return "";
+  v = String(v).trim();
+  if (/^\d{8}$/.test(v)) return v.slice(0,4) + "-" + v.slice(4,6) + "-" + v.slice(6,8);
+  if (/^\d{4}-\d{2}-\d{2}/.test(v)) return v.slice(0,10);
+  const d = new Date(v);
+  if (!isNaN(d)) return d.toISOString().slice(0,10);
+  return "";
+}
+function fmtDateDisplay(v) {
+  const iso = fmtDateInput(v);
+  if (!iso) return "-";
+  const [y,m,d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+
+const KS_COLUMNS = ["FECHA","OBSERVACION","CANTIDAD_OBSERVADA","FECHA_RESPUESTA","RESPUESTA_DESPACHO","PERSONAL_REPORTA","FECHA_ALMACEN","RESPUESTA_ALMACEN","ACCIONES_TOMADAS"];
+function estatusOf(r) {
+  const e = (r.ESTATUS || "").trim();
+  if (e !== "") return e;
+  const algoLlenado = KS_COLUMNS.some(k => (r[k] || "").trim() !== "");
+  return algoLlenado ? "Sin Evaluar" : "Conforme";
+}
+
+// Estatus "efectivo" para todo cálculo de OTIF: si la incidencia ya tiene VEREDICTO
+// (tras la investigación en Monitoreo de Incidencias), ese veredicto manda sobre el
+// reporte original. Mientras no haya veredicto, se usa el ESTATUS reportado tal cual.
+const VEREDICTOS_VALIDOS = ["Conforme", "Faltante", "Sobrante", "Mal Estado"];
+function estatusEfectivo(r) {
+  const v = (r.VEREDICTO || "").trim();
+  if (VEREDICTOS_VALIDOS.includes(v)) return v;
+  return estatusOf(r);
+}
+
+function badgeClass(estatus) {
+  if (estatus === "Conforme") return "badge-conforme";
+  if (estatus === "Faltante") return "badge-faltante";
+  if (estatus === "Sobrante") return "badge-sobrante";
+  if (estatus === "Mal Estado") return "badge-malestado";
+  return "badge-sinevaluar";
+}
+
+function actionIcon(estatus) {
+  if (estatus === "Conforme") return "visibility";
+  if (estatus === "Faltante") return "gavel";
+  if (estatus === "Sobrante") return "inventory_2";
+  if (estatus === "Mal Estado") return "report_problem";
+  return "edit";
+}
+
+function actionIconColor(estatus) {
+  if (estatus === "Conforme") return "text-secondary";
+  if (estatus === "Faltante") return "text-error";
+  if (estatus === "Sobrante") return "text-on-tertiary-container";
+  if (estatus === "Mal Estado") return "text-amber-600";
+  return "text-on-surface-variant";
+}
+
+/* ---------- Carga de datos ---------- */
+async function loadData() {
+  setConn("loading");
+  try {
+    const res = await fetch(CONFIG.CSV_URL + (CONFIG.CSV_URL.includes("?") ? "&" : "?") + "_ts=" + Date.now());
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const text = await res.text();
+    const rawRows = parseCSV(text);
+    const headerRowRaw = rawRows[0] || [];
+    const colIndexByKey = {};
+    headerRowRaw.forEach((h, i) => {
+      const key = HEADER_MAP[String(h).trim().toUpperCase()];
+      if (key) colIndexByKey[key] = i;
+    });
+    const missing = Object.values(HEADER_MAP).filter(k => k !== "DESTINATARIO" && !(k in colIndexByKey));
+    if (missing.length) {
+      console.warn("Columnas no encontradas en el CSV (revisa encabezados del Sheet):", missing);
+    }
+    const dataRows = rawRows.slice(1);
+    ROWS = dataRows.map((cells, idx) => {
+      const obj = {};
+      Object.values(HEADER_MAP).forEach(key => {
+        const i = colIndexByKey[key];
+        obj[key] = (i !== undefined && cells[i] !== undefined) ? cells[i].trim() : "";
+      });
+      obj._sheetRow = idx + 2;
+      return obj;
+    });
+    populateBodegaFilter();
+    populateMesFilter();
+    updateDateRangePill();
+    currentPage = 1;
+    renderAll();
+    setConn("ok");
+    document.getElementById("footer-sync-time").textContent = new Date().toLocaleTimeString("es-PE");
+    showToast("Sincronización completada", ROWS.length.toLocaleString("es-PE") + " líneas cargadas desde el Sheet.");
+    ["kpi-card-total","kpi-card-conforme","kpi-card-faltante","kpi-card-sobrante"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.classList.add("fade-highlight"); setTimeout(() => el.classList.remove("fade-highlight"), 1200); }
+    });
+  } catch (err) {
+    console.error(err);
+    setConn("error");
+    showToast("Error de sincronización", "No se pudo leer el Sheet. Revisa el CSV_URL y tu conexión.");
+  }
+}
+
+function setConn(state) {
+  const dot = document.getElementById("conn-dot");
+  const label = document.getElementById("conn-label");
+  if (state === "loading") { dot.className = "w-2 h-2 rounded-full bg-secondary animate-pulse"; label.textContent = "Cargando datos..."; }
+  else if (state === "ok") { dot.className = "w-2 h-2 rounded-full bg-on-tertiary-container"; label.textContent = "Conectado al Sheet"; }
+  else { dot.className = "w-2 h-2 rounded-full bg-error"; label.textContent = "Error de conexión"; }
+}
+
+function populateBodegaFilter() {
+  const sel = document.getElementById("filter-bodega");
+  const current = sel.value;
+  const bodegas = Array.from(new Set(ROWS.map(r => r.BODEGA).filter(Boolean))).sort();
+  sel.innerHTML = '<option value="all">Bodega: Todas</option>' + bodegas.map(b => `<option value="${b}">${b}</option>`).join("");
+  sel.value = bodegas.includes(current) ? current : "all";
+}
+
+function populateMesFilter() {
+  const sel = document.getElementById("filter-mes");
+  if (!sel) return;
+  const current = sel.value;
+  const monthKeys = Array.from(new Set(
+    ROWS.map(r => r.FECHA_CREACION).filter(d => /^\d{8}$/.test(d)).map(d => d.slice(0, 6))
+  )).sort().reverse(); // meses más recientes primero
+  const options = monthKeys.map(mk => {
+    const y = mk.slice(0, 4), m = parseInt(mk.slice(4, 6), 10);
+    return `<option value="${mk}">${MESES_ES[m - 1]} ${y}</option>`;
+  }).join("");
+  sel.innerHTML = '<option value="all">Mes: Todos</option>' + options;
+  sel.value = monthKeys.includes(current) ? current : "all";
+}
+
+function updateDateRangePill() {
+  const dates = ROWS.map(r => r.FECHA_CREACION).filter(d => /^\d{8}$/.test(d)).sort();
+  if (!dates.length) { document.getElementById("date-range-label").textContent = "Rango: --"; return; }
+  const min = dates[0], max = dates[dates.length-1];
+  document.getElementById("date-range-label").textContent = `${fmtDateDisplay(min)} - ${fmtDateDisplay(max)}`;
+}
+
+/* ---------- Filtros ---------- */
+function getFiltered() {
+  const q = document.getElementById("table-search").value.toLowerCase().trim();
+  const estFilter = document.getElementById("filter-estatus").value;
+  const bodegaFilter = document.getElementById("filter-bodega").value;
+  const mesFilter = document.getElementById("filter-mes") ? document.getElementById("filter-mes").value : "all";
+  const docFilter = document.getElementById("filter-documento").value.trim();
+  const fechaFilter = document.getElementById("filter-fecha").value.trim();
+  const bpcsFilter = document.getElementById("filter-bpcs").value.trim();
+  return ROWS.filter(r => {
+    if (estFilter !== "all" && estatusEfectivo(r) !== estFilter) return false;
+    if (bodegaFilter !== "all" && r.BODEGA !== bodegaFilter) return false;
+    if (mesFilter !== "all" && r.FECHA_CREACION.slice(0, 6) !== mesFilter) return false;
+    if (docFilter && !String(r.DOCUMENTO || "").toLowerCase().includes(docFilter.toLowerCase())) return false;
+    if (fechaFilter && r.FECHA_CREACION.indexOf(fechaFilter) === -1) return false;
+    if (bpcsFilter && !String(r.PEDIDO_BPCS || "").toLowerCase().includes(bpcsFilter.toLowerCase())) return false;
+    if (q) {
+      const hay = (r.DOCUMENTO + " " + r.CODIGO + " " + r.DESCRIPCION + " " + r.ID_PEDIDO).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+/* ---------- KPIs ---------- */
+function renderKPIs(rows) {
+  const total = rows.length;
+  const unidades = rows.reduce((s,r) => s + (parseFloat(r.UNIDADES) || 0), 0);
+  const conforme = rows.filter(r => estatusEfectivo(r) === "Conforme");
+  const faltante = rows.filter(r => estatusEfectivo(r) === "Faltante");
+  const sobrante = rows.filter(r => estatusEfectivo(r) === "Sobrante");
+  const malestado = rows.filter(r => estatusEfectivo(r) === "Mal Estado");
+  const evaluadas = conforme.length + faltante.length + sobrante.length + malestado.length;
+  const sinEvaluar = total - evaluadas;
+  const pctConforme = evaluadas ? Math.round((conforme.length / evaluadas) * 1000) / 10 : 0;
+  const pctFaltante = evaluadas ? Math.round((faltante.length / evaluadas) * 1000) / 10 : 0;
+  const pctSobrante = evaluadas ? Math.round((sobrante.length / evaluadas) * 1000) / 10 : 0;
+  const pctMalEstado = evaluadas ? Math.round((malestado.length / evaluadas) * 1000) / 10 : 0;
+
+  document.getElementById("kpi-total").textContent = total.toLocaleString("es-PE");
+  document.getElementById("kpi-unidades-badge").textContent = unidades.toLocaleString("es-PE") + " un.";
+  document.getElementById("kpi-evaluadas").textContent = evaluadas.toLocaleString("es-PE");
+  document.getElementById("kpi-sinevaluar").textContent = sinEvaluar.toLocaleString("es-PE");
+  const pctEval = total ? (evaluadas/total*100) : 0;
+  document.getElementById("kpi-total-bar-eval").style.width = pctEval + "%";
+  document.getElementById("kpi-total-bar-noeval").style.width = (100-pctEval) + "%";
+  document.getElementById("kpi-total-trend-txt").textContent = pctEval.toFixed(1) + "% evaluado";
+
+  document.getElementById("kpi-conforme-pct").textContent = pctConforme + "%";
+  document.getElementById("kpi-conforme-count").textContent = conforme.length.toLocaleString("es-PE");
+  document.getElementById("kpi-conforme-bar").style.width = Math.min(100, pctConforme) + "%";
+  const gap = Math.round((pctConforme - CONFIG.META_CONFORME) * 10) / 10;
+  const gapEl = document.getElementById("kpi-conforme-gap");
+  gapEl.textContent = evaluadas ? (gap >= 0 ? `+${gap} pts sobre meta` : `${gap} pts bajo meta`) : "-";
+  gapEl.className = "font-bold " + (gap >= 0 ? "text-on-tertiary-container" : "text-error");
+  document.getElementById("kpi-conforme-bar-gap").style.width = evaluadas ? Math.max(0, CONFIG.META_CONFORME - pctConforme) + "%" : "0%";
+
+  // Trend real: compara % conforme del último día vs el día anterior disponible
+  const daily = computeDailyStats(rows);
+  const dates = daily.dates;
+  const trendIcon = document.getElementById("kpi-conforme-trend-icon");
+  const trendTxt = document.getElementById("kpi-conforme-trend-txt");
+  const trendBox = document.getElementById("kpi-conforme-trend");
+  if (dates.length >= 2) {
+    const last = daily.perDate[dates[dates.length-1]];
+    const prev = daily.perDate[dates[dates.length-2]];
+    const lastPct = last.evaluadas ? (last.Conforme/last.evaluadas*100) : null;
+    const prevPct = prev.evaluadas ? (prev.Conforme/prev.evaluadas*100) : null;
+    if (lastPct !== null && prevPct !== null) {
+      const delta = Math.round((lastPct - prevPct)*10)/10;
+      trendIcon.textContent = delta > 0 ? "trending_up" : (delta < 0 ? "trending_down" : "trending_flat");
+      trendTxt.textContent = (delta >= 0 ? "+" : "") + delta + "% vs fecha anterior";
+      trendBox.className = "inline-flex items-center gap-0.5 px-space-xs py-0.5 rounded font-label-sm text-label-sm font-bold " + (delta >= 0 ? "bg-surface-container text-on-tertiary-container" : "bg-surface-container-high text-error");
+    } else {
+      trendTxt.textContent = "sin dato previo suficiente";
+    }
+  } else {
+    trendTxt.textContent = "sin dato previo";
+  }
+
+  document.getElementById("kpi-faltante-count").textContent = faltante.length.toLocaleString("es-PE");
+  document.getElementById("kpi-faltante-unid").textContent = faltante.reduce((s,r)=>s+(parseFloat(r.CANTIDAD_OBSERVADA)||0),0).toLocaleString("es-PE");
+  document.getElementById("kpi-faltante-pct").textContent = pctFaltante + "%";
+  document.getElementById("kpi-faltante-pct2").textContent = pctFaltante + "%";
+
+  document.getElementById("kpi-sobrante-count").textContent = sobrante.length.toLocaleString("es-PE");
+  document.getElementById("kpi-sobrante-unid").textContent = sobrante.reduce((s,r)=>s+(parseFloat(r.CANTIDAD_OBSERVADA)||0),0).toLocaleString("es-PE");
+  document.getElementById("kpi-sobrante-pct").textContent = pctSobrante + "%";
+  document.getElementById("kpi-sobrante-pct2").textContent = pctSobrante + "%";
+
+  // Desglose card: % por Pedidos únicos (BPCS, clasificados por el peor estatus de sus líneas) y % por Unidades
+  const ordersMap = {};
+  rows.forEach(r => {
+    const bpcs = r.PEDIDO_BPCS || "(sin bpcs)";
+    if (!ordersMap[bpcs]) ordersMap[bpcs] = { hasFaltante:false, hasSobrante:false, hasMalEstado:false, hasConforme:false, hasEvaluada:false };
+    const est = estatusEfectivo(r);
+    if (est === "Faltante") ordersMap[bpcs].hasFaltante = true;
+    if (est === "Sobrante") ordersMap[bpcs].hasSobrante = true;
+    if (est === "Mal Estado") ordersMap[bpcs].hasMalEstado = true;
+    if (est === "Conforme") ordersMap[bpcs].hasConforme = true;
+    if (est !== "Sin Evaluar") ordersMap[bpcs].hasEvaluada = true;
+  });
+  let ordConforme = 0, ordFaltante = 0, ordSobrante = 0, ordMalEstado = 0, ordEvaluados = 0;
+  Object.values(ordersMap).forEach(o => {
+    if (!o.hasEvaluada) return; // pedido totalmente sin evaluar: se excluye del % (igual que a nivel línea)
+    ordEvaluados++;
+    if (o.hasFaltante) ordFaltante++;
+    else if (o.hasMalEstado) ordMalEstado++;
+    else if (o.hasSobrante) ordSobrante++;
+    else ordConforme++;
+  });
+  const pctOrdConforme = ordEvaluados ? Math.round((ordConforme / ordEvaluados) * 1000) / 10 : 0;
+  const pctOrdFaltante = ordEvaluados ? Math.round((ordFaltante / ordEvaluados) * 1000) / 10 : 0;
+  const pctOrdSobrante = ordEvaluados ? Math.round((ordSobrante / ordEvaluados) * 1000) / 10 : 0;
+  const pctOrdMalEstado = ordEvaluados ? Math.round((ordMalEstado / ordEvaluados) * 1000) / 10 : 0;
+
+  // Unidades: en líneas Faltante/Sobrante/Mal Estado, solo la CANTIDAD_OBSERVADA (col. N) es la discrepancia real;
+  // el resto de las unidades de esa línea sí se entregaron bien y cuentan como conformes.
+  let unidConforme = conforme.reduce((s,r)=>s+(parseFloat(r.UNIDADES)||0),0);
+  let unidFaltante = 0, unidSobrante = 0, unidMalEstado = 0;
+  faltante.forEach(r => {
+    const total = parseFloat(r.UNIDADES) || 0;
+    const obs = Math.min(parseFloat(r.CANTIDAD_OBSERVADA) || 0, total);
+    unidFaltante += obs;
+    unidConforme += (total - obs);
+  });
+  sobrante.forEach(r => {
+    const total = parseFloat(r.UNIDADES) || 0;
+    const obs = Math.min(parseFloat(r.CANTIDAD_OBSERVADA) || 0, total);
+    unidSobrante += obs;
+    unidConforme += (total - obs);
+  });
+  malestado.forEach(r => {
+    const total = parseFloat(r.UNIDADES) || 0;
+    const obs = Math.min(parseFloat(r.CANTIDAD_OBSERVADA) || 0, total) || total;
+    unidMalEstado += obs;
+    unidConforme += Math.max(0, total - obs);
+  });
+  const unidEvaluadas = unidConforme + unidFaltante + unidSobrante + unidMalEstado;
+  const pctUnidConforme = unidEvaluadas ? Math.round((unidConforme / unidEvaluadas) * 1000) / 10 : 0;
+  const pctUnidFaltante = unidEvaluadas ? Math.round((unidFaltante / unidEvaluadas) * 1000) / 10 : 0;
+  const pctUnidSobrante = unidEvaluadas ? Math.round((unidSobrante / unidEvaluadas) * 1000) / 10 : 0;
+  const pctUnidMalEstado = unidEvaluadas ? Math.round((unidMalEstado / unidEvaluadas) * 1000) / 10 : 0;
+
+  document.getElementById("desg-conforme-pedidos-pct").textContent = pctOrdConforme + "%";
+  document.getElementById("desg-conforme-pedidos-bar").style.width = pctOrdConforme + "%";
+  document.getElementById("desg-conforme-pedidos-count").textContent = ordConforme.toLocaleString("es-PE") + " ped.";
+  document.getElementById("desg-conforme-unidades-pct").textContent = pctUnidConforme + "%";
+  document.getElementById("desg-conforme-unidades-bar").style.width = pctUnidConforme + "%";
+  document.getElementById("desg-conforme-unidades-count").textContent = Math.round(unidConforme).toLocaleString("es-PE") + " un.";
+
+  document.getElementById("desg-faltante-pedidos-pct").textContent = pctOrdFaltante + "%";
+  document.getElementById("desg-faltante-pedidos-bar").style.width = pctOrdFaltante + "%";
+  document.getElementById("desg-faltante-pedidos-count").textContent = ordFaltante.toLocaleString("es-PE") + " ped.";
+  document.getElementById("desg-faltante-unidades-pct").textContent = pctUnidFaltante + "%";
+  document.getElementById("desg-faltante-unidades-bar").style.width = pctUnidFaltante + "%";
+  document.getElementById("desg-faltante-unidades-count").textContent = Math.round(unidFaltante).toLocaleString("es-PE") + " un.";
+
+  document.getElementById("desg-sobrante-pedidos-pct").textContent = pctOrdSobrante + "%";
+  document.getElementById("desg-sobrante-pedidos-bar").style.width = pctOrdSobrante + "%";
+  document.getElementById("desg-sobrante-pedidos-count").textContent = ordSobrante.toLocaleString("es-PE") + " ped.";
+  document.getElementById("desg-sobrante-unidades-pct").textContent = pctUnidSobrante + "%";
+  document.getElementById("desg-sobrante-unidades-bar").style.width = pctUnidSobrante + "%";
+  document.getElementById("desg-sobrante-unidades-count").textContent = Math.round(unidSobrante).toLocaleString("es-PE") + " un.";
+
+  document.getElementById("desg-malestado-pedidos-pct").textContent = pctOrdMalEstado + "%";
+  document.getElementById("desg-malestado-pedidos-bar").style.width = pctOrdMalEstado + "%";
+  document.getElementById("desg-malestado-pedidos-count").textContent = ordMalEstado.toLocaleString("es-PE") + " ped.";
+  document.getElementById("desg-malestado-unidades-pct").textContent = pctUnidMalEstado + "%";
+  document.getElementById("desg-malestado-unidades-bar").style.width = pctUnidMalEstado + "%";
+  document.getElementById("desg-malestado-unidades-count").textContent = Math.round(unidMalEstado).toLocaleString("es-PE") + " un.";
+
+  const unidObs = rows.reduce((s,r)=> s + (estatusEfectivo(r)!=="Conforme" ? (parseFloat(r.CANTIDAD_OBSERVADA)||0) : 0), 0);
+  document.getElementById("desg-unidades-obs").textContent = unidObs.toLocaleString("es-PE") + " un.";
+}
+
+/* ---------- Estadísticas diarias (para chart y trend) ---------- */
+function computeDailyStats(rows) {
+  const perDate = {};
+  rows.forEach(r => {
+    const key = /^\d{8}$/.test(r.FECHA_CREACION) ? r.FECHA_CREACION : "Sin fecha";
+    if (!perDate[key]) perDate[key] = { total:0, Conforme:0, Faltante:0, Sobrante:0, "Mal Estado":0, "Sin Evaluar":0, evaluadas:0, unidades:0, pedidosSet:new Set() };
+    const est = estatusEfectivo(r);
+    perDate[key][est]++;
+    perDate[key].total++;
+    if (est !== "Sin Evaluar") perDate[key].evaluadas++;
+    perDate[key].unidades += (parseFloat(r.UNIDADES)||0);
+    perDate[key].pedidosSet.add(r.PEDIDO_BPCS);
+  });
+  const dates = Object.keys(perDate).filter(d => d !== "Sin fecha").sort();
+  return { dates, perDate };
+}
+
+/* ---------- Chart principal (SVG dinámico) ---------- */
+function renderChart(rows) {
+  const svg = document.getElementById("main-chart");
+  const { dates, perDate } = computeDailyStats(rows);
+  const mesFilterActive = document.getElementById("filter-mes") && document.getElementById("filter-mes").value !== "all";
+  const shown = mesFilterActive ? dates : dates.slice(-7);
+  svg.innerHTML = "";
+
+  if (!shown.length) {
+    svg.innerHTML = '<text x="380" y="130" text-anchor="middle" fill="#76777d" font-size="13">Sin datos para graficar en el rango seleccionado</text>';
+    document.getElementById("chart-avg-conforme").textContent = "-";
+    document.getElementById("chart-note").textContent = "";
+    return;
+  }
+
+  const W = 760, H = 260, left = 40, right = 740, top = 30, bottom = 230;
+  const plotW = right - left, plotH = bottom - top;
+  const maxUnidades = Math.max(1, ...shown.map(d => perDate[d].unidades));
+  const maxPedidos = Math.max(1, ...shown.map(d => perDate[d].pedidosSet.size));
+  const slot = plotW / shown.length;
+
+  document.getElementById("chart-meta-label").textContent = "Meta " + CONFIG.META_CONFORME.toFixed(1) + "%";
+
+  let svgContent = `<defs>
+    <linearGradient id="barGradUnidades" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#d3e4fe" stop-opacity="0.95"></stop>
+      <stop offset="100%" stop-color="#cbdbf5" stop-opacity="0.5"></stop>
+    </linearGradient>
+    <linearGradient id="barGradPedidos" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#006398" stop-opacity="0.95"></stop>
+      <stop offset="100%" stop-color="#006398" stop-opacity="0.65"></stop>
+    </linearGradient>
+    <filter id="lineGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#069669" flood-opacity="0.3"></feDropShadow>
+    </filter>
+  </defs>`;
+  // Grid lines + eje Y (0-100%)
+  [0,25,50,75,100].forEach(pct => {
+    const y = bottom - (pct/100)*plotH;
+    svgContent += `<line x1="${left}" x2="${right}" y1="${y}" y2="${y}" stroke="#c6c6cd" stroke-dasharray="3,3" stroke-opacity="0.25"></line>`;
+    svgContent += `<text x="${left-8}" y="${y+4}" font-size="10" font-weight="600" fill="#76777d" text-anchor="end">${pct}%</text>`;
+  });
+  // Meta line
+  const metaY = bottom - (CONFIG.META_CONFORME/100)*plotH;
+  svgContent += `<line x1="${left}" x2="${right}" y1="${metaY}" y2="${metaY}" stroke="#ba1a1a" stroke-dasharray="4,4" stroke-width="1.5" stroke-opacity="0.6"></line>`;
+
+  const linePoints = [];
+  let sumConforme = 0, countConforme = 0;
+
+  shown.forEach((d, i) => {
+    const info = perDate[d];
+    const cx = left + slot*i + slot/2;
+    const unidBarH = (info.unidades / maxUnidades) * plotH;
+    const pedBarH = (info.pedidosSet.size / maxPedidos) * plotH;
+    const unidW = Math.min(22, slot*0.4);
+    const pedW = Math.min(16, slot*0.28);
+    const dispLabel = /^\d{8}$/.test(d) ? d.slice(6,8)+"/"+d.slice(4,6) : d;
+    const pctForTip = info.evaluadas ? (info.Conforme/info.evaluadas*100).toFixed(1) : "s/d";
+    const desvios = (info.Faltante||0) + (info.Sobrante||0) + (info["Mal Estado"]||0);
+    svgContent += `<g class="chart-day-group transition-opacity" data-day="${dispLabel}" data-pct="${pctForTip}%" data-orders="${info.pedidosSet.size}" data-units="${Math.round(info.unidades).toLocaleString('es-PE')}" data-eval="${info.evaluadas}/${info.total}" data-desvios="${desvios}">
+      <rect x="${cx-unidW-2}" y="${bottom-unidBarH}" width="${unidW}" height="${unidBarH}" rx="2" fill="url(#barGradUnidades)"></rect>
+      <rect x="${cx+2}" y="${bottom-pedBarH}" width="${pedW}" height="${pedBarH}" rx="2" fill="url(#barGradPedidos)"></rect>
+      <text x="${cx-unidW-2+unidW/2}" y="${bottom-6}" font-size="9" font-weight="700" text-anchor="middle" fill="#0b3a57" stroke="#ffffff" stroke-width="3" paint-order="stroke">${Math.round(info.unidades).toLocaleString('es-PE')}</text>
+      <text x="${cx+2+pedW/2}" y="${bottom-6}" font-size="9" font-weight="700" text-anchor="middle" fill="#0b3a57" stroke="#ffffff" stroke-width="3" paint-order="stroke">${info.pedidosSet.size}</text>
+      <rect x="${cx-unidW-6}" y="${top}" width="${unidW+pedW+8}" height="${bottom-top}" fill="transparent"></rect>
+      <text x="${cx}" y="${bottom+18}" font-size="${shown.length > 12 ? 9 : 11}" font-weight="600" text-anchor="${shown.length > 12 ? 'end' : 'middle'}" fill="#45464d" transform="${shown.length > 12 ? `rotate(-45 ${cx} ${bottom+18})` : ''}">${dispLabel}</text>
+    </g>`;
+
+    const pct = info.evaluadas ? (info.Conforme/info.evaluadas*100) : null;
+    if (pct !== null) {
+      const y = bottom - (pct/100)*plotH;
+      linePoints.push([cx, y, pct]);
+      sumConforme += pct; countConforme++;
+    }
+  });
+
+  if (linePoints.length) {
+    const pathD = "M " + linePoints.map(p => `${p[0]} ${p[1]}`).join(" L ");
+    svgContent += `<path d="${pathD}" fill="none" stroke="#069669" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#lineGlow)"></path>`;
+    linePoints.forEach(p => {
+      const good = p[2] >= CONFIG.META_CONFORME;
+      svgContent += `<circle cx="${p[0]}" cy="${p[1]}" r="5" fill="#ffffff" stroke="${good?'#069669':'#ba1a1a'}" stroke-width="3"></circle>`;
+      svgContent += `<text x="${p[0]}" y="${p[1]-10}" font-size="10" font-weight="700" text-anchor="middle" fill="${good?'#069669':'#ba1a1a'}">${p[2].toFixed(1)}%</text>`;
+    });
+  }
+
+  svg.innerHTML = svgContent;
+  setupChartTooltips();
+  document.getElementById("chart-avg-conforme").textContent = countConforme ? (Math.round(sumConforme/countConforme*10)/10)+"%" : "-";
+  document.getElementById("chart-note").innerHTML = '<span class="material-symbols-outlined text-[16px]">info</span> Barras claras = unidades, barras azules = pedidos únicos, línea verde = % conforme.';
+}
+
+/* ---------- Tooltip interactivo del gráfico ---------- */
+function setupChartTooltips() {
+  const tooltip = document.getElementById("chart-tooltip");
+  const container = tooltip ? tooltip.parentElement : null;
+  const groups = document.querySelectorAll(".chart-day-group");
+  if (!tooltip || !container || !groups.length) return;
+
+  groups.forEach(g => {
+    g.addEventListener("mouseenter", () => {
+      document.getElementById("tooltip-day").textContent = g.getAttribute("data-day");
+      document.getElementById("tooltip-pct").textContent = g.getAttribute("data-pct") + " Conforme";
+      document.getElementById("tooltip-orders").textContent = g.getAttribute("data-orders") + " ped.";
+      document.getElementById("tooltip-units").textContent = g.getAttribute("data-units") + " un.";
+      document.getElementById("tooltip-evaluadas").textContent = g.getAttribute("data-eval");
+      document.getElementById("tooltip-desvios").textContent = g.getAttribute("data-desvios") + " líneas";
+      tooltip.classList.remove("opacity-0");
+      tooltip.classList.add("opacity-100");
+    });
+    g.addEventListener("mousemove", (e) => {
+      const rect = container.getBoundingClientRect();
+      tooltip.style.left = (e.clientX - rect.left) + "px";
+      tooltip.style.top = (e.clientY - rect.top - 12) + "px";
+    });
+    g.addEventListener("mouseleave", () => {
+      tooltip.classList.remove("opacity-100");
+      tooltip.classList.add("opacity-0");
+    });
+  });
+}
+
+/* ---------- Tabla + Paginación (maestro: 1 fila por pedido BPCS) ---------- */
+let LAST_FILTERED_ROWS = [];
+
+function groupByPedido(rows) {
+  const map = new Map();
+  rows.forEach(r => {
+    const key = r.PEDIDO_BPCS || "(sin BPCS)";
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(r);
+  });
+  const orders = Array.from(map.entries()).map(([bpcs, lines]) => {
+    const fechas = Array.from(new Set(lines.map(l => l.FECHA_CREACION))).filter(Boolean).sort();
+    const documentos = Array.from(new Set(lines.map(l => l.DOCUMENTO).filter(Boolean)));
+    const destinatarios = Array.from(new Set(lines.map(l => l.DESTINATARIO).filter(Boolean)));
+    const bodegas = Array.from(new Set(lines.map(l => l.BODEGA).filter(Boolean)));
+    const unidades = lines.reduce((s, l) => s + (parseFloat(l.UNIDADES) || 0), 0);
+    let hasFaltante = false, hasSobrante = false, hasMalEstado = false, hasEvaluada = false;
+    lines.forEach(l => {
+      const est = estatusEfectivo(l);
+      if (est === "Faltante") hasFaltante = true;
+      if (est === "Sobrante") hasSobrante = true;
+      if (est === "Mal Estado") hasMalEstado = true;
+      if (est !== "Sin Evaluar") hasEvaluada = true;
+    });
+    const estGrupo = !hasEvaluada ? "Sin Evaluar" : (hasFaltante ? "Faltante" : (hasMalEstado ? "Mal Estado" : (hasSobrante ? "Sobrante" : "Conforme")));
+    return { bpcs, lines, fecha: fechas[fechas.length - 1] || "", documentos, destinatarios, bodegas, unidades, estGrupo };
+  });
+  orders.sort((a, b) => (b.fecha || "").localeCompare(a.fecha || ""));
+  return orders;
+}
+
+let expandedOrders = new Set(); // BPCS actualmente expandidos en la tabla
+
+function renderTable(rows) {
+  LAST_FILTERED_ROWS = rows;
+  const tbody = document.getElementById("table-body");
+  tbody.innerHTML = "";
+
+  const orders = groupByPedido(rows);
+  const totalPages = Math.max(1, Math.ceil(orders.length / pageSize));
+  if (currentPage > totalPages) currentPage = totalPages;
+  const startIdx = (currentPage - 1) * pageSize;
+  const pageOrders = orders.slice(startIdx, startIdx + pageSize);
+
+  pageOrders.forEach(o => {
+    const allSelected = o.lines.every(l => selectedRows.has(l._sheetRow));
+    const isExpanded = expandedOrders.has(o.bpcs);
+
+    const tr = document.createElement("tr");
+    tr.className = "hover:bg-surface-container-low/60 transition-colors cursor-pointer" + (allSelected ? " row-selected" : "") + (isExpanded ? " bg-surface-container-low" : "");
+    tr.innerHTML = `
+      <td class="py-space-md px-space-md" data-stop="1">
+        <input type="checkbox" class="order-checkbox" data-bpcs="${o.bpcs}" ${allSelected ? "checked" : ""}>
+      </td>
+      <td class="py-space-md px-space-md">
+        <div class="flex flex-col">
+          <span class="font-bold text-on-surface font-label-md text-label-md">${fmtDateDisplay(o.fecha)}</span>
+          <span class="text-on-surface-variant text-[11px]">${o.bodegas.join(", ") || "-"}</span>
+        </div>
+      </td>
+      <td class="py-space-md px-space-md">
+        <div class="flex flex-col">
+          <span class="font-bold text-on-surface">${o.bpcs}</span>
+          <span class="text-[11px] text-on-surface-variant">${o.documentos.join(", ") || "-"}</span>
+        </div>
+      </td>
+      <td class="py-space-md px-space-md">
+        <span class="text-[12px] text-on-surface">${o.destinatarios.join(", ") || "-"}</span>
+      </td>
+      <td class="py-space-md px-space-md text-right font-semibold">${o.lines.length.toLocaleString("es-PE")}</td>
+      <td class="py-space-md px-space-md text-right font-semibold">${Math.round(o.unidades).toLocaleString("es-PE")}</td>
+      <td class="py-space-md px-space-md text-center">
+        <span class="inline-flex items-center px-space-sm py-1 rounded font-label-sm text-label-sm font-bold ${badgeClass(o.estGrupo)}">${o.estGrupo}</span>
+      </td>
+      <td class="py-space-md px-space-md text-right" data-stop="1">
+        <button class="order-open-btn p-1.5 rounded-lg hover:bg-surface-container-high transition-colors ${actionIconColor(o.estGrupo)}" data-bpcs="${o.bpcs}" type="button" title="${isExpanded ? 'Ocultar' : 'Ver'} líneas del pedido">
+          <span class="material-symbols-outlined text-[20px]">${isExpanded ? "expand_more" : "chevron_right"}</span>
+        </button>
+      </td>`;
+    tr.addEventListener("click", (e) => {
+      if (e.target.closest('[data-stop="1"]')) return;
+      toggleOrderExpand(o.bpcs);
+    });
+    tbody.appendChild(tr);
+
+    if (isExpanded) {
+      const trDetail = document.createElement("tr");
+      trDetail.className = "bg-surface-container-low";
+      trDetail.innerHTML = `<td colspan="8" class="p-0">
+        <div class="max-h-[420px] overflow-y-auto border-y border-outline-variant/30">
+          <table class="w-full text-left border-collapse">
+            <thead class="sticky top-0 bg-surface-container-high z-10">
+              <tr class="text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+                <th class="py-space-sm px-space-lg font-bold">Código - EAN / Descripción</th>
+                <th class="py-space-sm px-space-md font-bold text-right">Unidades</th>
+                <th class="py-space-sm px-space-md font-bold text-center">Estatus</th>
+                <th class="py-space-sm px-space-md font-bold">Observación / Personal</th>
+                <th class="py-space-sm px-space-md font-bold text-right">Acción</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-container-lowest font-body-sm text-body-sm text-on-surface">
+              ${o.lines.map(r => {
+                const est = estatusEfectivo(r);
+                const huboVeredicto = VEREDICTOS_VALIDOS.includes((r.VEREDICTO||"").trim());
+                return `<tr class="hover:bg-surface-container-lowest/60 transition-colors">
+                  <td class="py-space-sm px-space-lg">
+                    <div class="flex flex-col">
+                      <span class="font-mono text-[12px] font-semibold text-on-surface">${r.CODIGO} <span class="text-[10px] text-outline font-normal">• ${r.EAN13}</span></span>
+                      <span class="text-[11px] text-on-surface-variant">${r.DESCRIPCION}</span>
+                    </div>
+                  </td>
+                  <td class="py-space-sm px-space-md text-right font-semibold">${r.UNIDADES}</td>
+                  <td class="py-space-sm px-space-md text-center">
+                    <span class="inline-flex items-center px-space-sm py-1 rounded font-label-sm text-label-sm font-bold ${badgeClass(est)}">${est}</span>
+                    ${huboVeredicto ? `<div class="text-[10px] text-on-surface-variant mt-0.5">Reportado: ${estatusOf(r)}</div>` : ""}
+                  </td>
+                  <td class="py-space-sm px-space-md">
+                    <div class="flex flex-col">
+                      <span class="text-[12px] text-on-surface">${r.OBSERVACION || "-"}</span>
+                      <span class="text-[11px] text-on-surface-variant">${r.PERSONAL_REPORTA || ""}</span>
+                    </div>
+                  </td>
+                  <td class="py-space-sm px-space-md text-right">
+                    <button class="btn-edit-line p-1.5 rounded-lg hover:bg-surface-container-high transition-colors ${actionIconColor(est)}" data-row="${r._sheetRow}" type="button" title="Ver / Editar línea">
+                      <span class="material-symbols-outlined text-[20px]">${actionIcon(est)}</span>
+                    </button>
+                  </td>
+                </tr>`;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+        <div class="p-space-sm bg-surface-container-lowest flex justify-end">
+          <button class="btn-add-line inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg bg-surface-container-high hover:bg-secondary-container text-on-surface font-label-sm text-label-sm font-bold transition-colors" data-bpcs="${o.bpcs}" type="button">
+            <span class="material-symbols-outlined text-[16px]">add_box</span>
+            Declarar línea no solicitada (Sobrante)
+          </button>
+        </div>
+      </td>`;
+      tbody.appendChild(trDetail);
+    }
+  });
+
+  document.querySelectorAll(".btn-add-line").forEach(btn => {
+    btn.addEventListener("click", (e) => { e.stopPropagation(); openAddLineModal(btn.dataset.bpcs); });
+  });
+
+  document.getElementById("table-summary").textContent =
+    `Mostrando ${pageOrders.length ? (startIdx+1) : 0}-${startIdx+pageOrders.length} de ${orders.length.toLocaleString("es-PE")} pedidos filtrados (${rows.length.toLocaleString("es-PE")} líneas)`;
+
+  renderPagination(totalPages);
+
+  document.querySelectorAll(".order-open-btn").forEach(btn => {
+    btn.addEventListener("click", () => toggleOrderExpand(btn.dataset.bpcs));
+  });
+
+  document.querySelectorAll(".btn-edit-line").forEach(btn => {
+    btn.addEventListener("click", (e) => { e.stopPropagation(); openModal(parseInt(btn.dataset.row, 10)); });
+  });
+
+  document.querySelectorAll(".order-checkbox").forEach(cb => {
+    cb.addEventListener("change", () => {
+      const order = orders.find(o => o.bpcs === cb.dataset.bpcs);
+      if (!order) return;
+      order.lines.forEach(l => { if (cb.checked) selectedRows.add(l._sheetRow); else selectedRows.delete(l._sheetRow); });
+      cb.closest("tr").classList.toggle("row-selected", cb.checked);
+      updateSelectAllState(rows);
+      updateBulkBar();
+    });
+  });
+  updateSelectAllState(rows);
+  updateBulkBar();
+}
+
+function toggleOrderExpand(bpcs) {
+  if (expandedOrders.has(bpcs)) expandedOrders.delete(bpcs);
+  else expandedOrders.add(bpcs);
+  renderTable(LAST_FILTERED_ROWS);
+}
+
+function updateSelectAllState(filteredRows) {
+  const selectAll = document.getElementById("select-all-rows");
+  if (!selectAll) return;
+  const allSelected = filteredRows.length > 0 && filteredRows.every(r => selectedRows.has(r._sheetRow));
+  selectAll.checked = allSelected;
+}
+
+function updateBulkBar() {
+  const bar = document.getElementById("bulk-actions-bar");
+  const countEl = document.getElementById("bulk-count");
+  if (!bar || !countEl) return;
+  countEl.textContent = selectedRows.size;
+  bar.classList.toggle("hidden", selectedRows.size === 0);
+  bar.classList.toggle("flex", selectedRows.size > 0);
+}
+
+function renderPagination(totalPages) {
+  const box = document.getElementById("pagination-buttons");
+  box.innerHTML = "";
+  const mkBtn = (label, page, disabled, active) => {
+    const b = document.createElement("button");
+    b.textContent = label;
+    b.className = "px-2.5 py-1 rounded text-[12px] font-bold transition-colors " +
+      (active ? "bg-primary-container text-on-primary shadow-xs" : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high") +
+      (disabled ? " opacity-40 cursor-not-allowed" : "");
+    if (!disabled) b.addEventListener("click", () => { currentPage = page; renderTable(getFiltered()); });
+    return b;
+  };
+  box.appendChild(mkBtn("«", currentPage - 1, currentPage <= 1, false));
+  const maxButtons = 5;
+  let startP = Math.max(1, currentPage - 2);
+  let endP = Math.min(totalPages, startP + maxButtons - 1);
+  startP = Math.max(1, endP - maxButtons + 1);
+  for (let p = startP; p <= endP; p++) box.appendChild(mkBtn(String(p), p, false, p === currentPage));
+  box.appendChild(mkBtn("»", currentPage + 1, currentPage >= totalPages, false));
+}
+
+/* ---------- OTIF por rango de tiempo (Hoy / 7 días / Mes / Atribución) ---------- */
+const MESES_ES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+
+function statsFor(rows) {
+  const s = { total:0, Conforme:0, Faltante:0, Sobrante:0, "Mal Estado":0, evaluadas:0, unidades:0, pedidosSet:new Set(), obsFaltante:0, obsSobrante:0, obsMalEstado:0 };
+  rows.forEach(r => {
+    const est = estatusEfectivo(r);
+    s.total++;
+    s[est] = (s[est] || 0) + 1;
+    if (est !== "Sin Evaluar") s.evaluadas++;
+    s.unidades += (parseFloat(r.UNIDADES) || 0);
+    s.pedidosSet.add(r.PEDIDO_BPCS);
+    if (est === "Faltante") s.obsFaltante += (parseFloat(r.CANTIDAD_OBSERVADA) || 0);
+    if (est === "Sobrante") s.obsSobrante += (parseFloat(r.CANTIDAD_OBSERVADA) || 0);
+    if (est === "Mal Estado") s.obsMalEstado += (parseFloat(r.CANTIDAD_OBSERVADA) || 0);
+  });
+  s.pctConforme = s.evaluadas ? (s.Conforme / s.evaluadas * 100) : null;
+  return s;
+}
+
+function setTrend(iconId, txtId, boxId, currentPct, prevPct, suffix) {
+  const icon = document.getElementById(iconId), txt = document.getElementById(txtId), box = document.getElementById(boxId);
+  if (!icon || !txt || !box) return;
+  if (currentPct === null || prevPct === null || prevPct === undefined) {
+    icon.textContent = "trending_flat";
+    txt.textContent = "sin dato previo";
+    box.className = "inline-flex items-center gap-0.5 px-space-xs py-0.5 rounded font-label-sm text-label-sm font-bold bg-surface-container-high text-on-surface-variant";
+    return;
+  }
+  const delta = Math.round((currentPct - prevPct) * 10) / 10;
+  icon.textContent = delta > 0 ? "trending_up" : (delta < 0 ? "trending_down" : "trending_flat");
+  txt.textContent = (delta >= 0 ? "+" : "") + delta + "% " + suffix;
+  box.className = "inline-flex items-center gap-0.5 px-space-xs py-0.5 rounded font-label-sm text-label-sm font-bold " + (delta >= 0 ? "bg-surface-container text-on-tertiary-container" : "bg-surface-container-high text-error");
+}
+
+function renderOtifTimeCards(baseRows) {
+  const validRows = baseRows.filter(r => /^\d{8}$/.test(r.FECHA_CREACION));
+  const uniqueDates = Array.from(new Set(validRows.map(r => r.FECHA_CREACION))).sort();
+
+  if (!uniqueDates.length) {
+    ["otif-today-pct","otif-7d-pct","otif-month-pct"].forEach(id => document.getElementById(id).textContent = "s/d");
+    document.getElementById("otif-today-date").textContent = "Sin fecha detectada en el rango filtrado";
+    document.getElementById("otif-7d-range").textContent = "Sin fecha detectada en el rango filtrado";
+    document.getElementById("otif-month-label").textContent = "-";
+    document.getElementById("otif-atrib-title").textContent = "Sin datos";
+    return;
+  }
+
+  const latestDate = uniqueDates[uniqueDates.length - 1];
+  const prevDate = uniqueDates.length >= 2 ? uniqueDates[uniqueDates.length - 2] : null;
+
+  /* --- Card 1: Hoy (última fecha con datos en el rango filtrado) --- */
+  const todayStats = statsFor(validRows.filter(r => r.FECHA_CREACION === latestDate));
+  const prevDayStats = prevDate ? statsFor(validRows.filter(r => r.FECHA_CREACION === prevDate)) : null;
+  document.getElementById("otif-today-date").textContent = fmtDateDisplay(latestDate) + " (última fecha con datos)";
+  document.getElementById("otif-today-meta-badge").textContent = "Meta: ≥" + CONFIG.META_CONFORME.toFixed(1) + "%";
+  const todayPct = todayStats.pctConforme;
+  document.getElementById("otif-today-pct").textContent = todayPct !== null ? todayPct.toFixed(1) + "%" : "s/d";
+  document.getElementById("otif-today-bar").style.width = (todayPct || 0) + "%";
+  document.getElementById("otif-today-bar-gap").style.width = Math.max(0, 100 - (todayPct || 0)) + "%";
+  document.getElementById("otif-today-desp").textContent = todayStats.total.toLocaleString("es-PE");
+  document.getElementById("otif-today-cumpl").textContent = todayStats.Conforme.toLocaleString("es-PE");
+  setTrend("otif-today-trend-icon", "otif-today-trend-txt", "otif-today-trend", todayPct, prevDayStats ? prevDayStats.pctConforme : null, "vs fecha anterior");
+
+  /* --- Card 2: Lapso 7 días (semana móvil) --- */
+  const last7 = uniqueDates.slice(-7);
+  const prev7 = uniqueDates.slice(-14, -7);
+  const weekStats = statsFor(validRows.filter(r => last7.includes(r.FECHA_CREACION)));
+  const prevWeekStats = prev7.length ? statsFor(validRows.filter(r => prev7.includes(r.FECHA_CREACION))) : null;
+  document.getElementById("otif-7d-range").textContent = fmtDateDisplay(last7[0]) + " – " + fmtDateDisplay(last7[last7.length - 1]);
+  const weekPct = weekStats.pctConforme;
+  document.getElementById("otif-7d-pct").textContent = weekPct !== null ? weekPct.toFixed(1) + "%" : "s/d";
+  document.getElementById("otif-7d-bar").style.width = (weekPct || 0) + "%";
+  document.getElementById("otif-7d-bar-gap").style.width = Math.max(0, 100 - (weekPct || 0)) + "%";
+  document.getElementById("otif-7d-total").textContent = weekStats.pedidosSet.size.toLocaleString("es-PE");
+  document.getElementById("otif-7d-quiebre").textContent = (weekStats.Faltante + weekStats.Sobrante + weekStats["Mal Estado"]).toLocaleString("es-PE") + " ped.";
+  const gap7 = weekPct !== null ? Math.round((weekPct - CONFIG.META_CONFORME) * 10) / 10 : null;
+  const gapEl7 = document.getElementById("otif-7d-gap");
+  gapEl7.textContent = gap7 === null ? "-" : (gap7 >= 0 ? `+${gap7} pts sobre meta` : `${gap7} pts bajo meta`);
+  gapEl7.className = "font-bold " + (gap7 !== null && gap7 < 0 ? "text-error" : "text-on-tertiary-container");
+  setTrend("otif-7d-trend-icon", "otif-7d-trend-txt", "otif-7d-trend", weekPct, prevWeekStats ? prevWeekStats.pctConforme : null, "vs semana ant.");
+
+  /* --- Card 3: Mensual acumulado (mes de la última fecha con datos) --- */
+  const monthKey = latestDate.slice(0, 6);
+  const monthNum = parseInt(monthKey.slice(4, 6), 10), yearNum = monthKey.slice(0, 4);
+  const monthStats = statsFor(validRows.filter(r => r.FECHA_CREACION.slice(0, 6) === monthKey));
+  let pm = monthNum - 1, py = parseInt(yearNum, 10);
+  if (pm === 0) { pm = 12; py -= 1; }
+  const prevMonthKey = String(py) + String(pm).padStart(2, "0");
+  const prevMonthRows = validRows.filter(r => r.FECHA_CREACION.slice(0, 6) === prevMonthKey);
+  const prevMonthStats = prevMonthRows.length ? statsFor(prevMonthRows) : null;
+
+  document.getElementById("otif-month-label").textContent = MESES_ES[monthNum - 1] + " " + yearNum;
+  const monthPct = monthStats.pctConforme;
+  document.getElementById("otif-month-pct").textContent = monthPct !== null ? monthPct.toFixed(1) + "%" : "s/d";
+  document.getElementById("otif-month-bar").style.width = (monthPct || 0) + "%";
+  document.getElementById("otif-month-total").textContent = monthStats.pedidosSet.size.toLocaleString("es-PE") + " pedidos";
+  document.getElementById("otif-month-unidades").textContent = Math.round(monthStats.unidades).toLocaleString("es-PE");
+  const gapM = monthPct !== null ? Math.round((monthPct - CONFIG.META_CONFORME) * 10) / 10 : null;
+  const gapMEl = document.getElementById("otif-month-gap");
+  gapMEl.textContent = gapM === null ? "-" : (gapM >= 0 ? `Meta Superada (+${gapM}%)` : `Bajo meta (${gapM}%)`);
+  gapMEl.className = "font-bold " + (gapM !== null && gapM < 0 ? "text-error" : "text-on-tertiary-container");
+  setTrend("otif-month-trend-icon", "otif-month-trend-txt", "otif-month-trend", monthPct, prevMonthStats ? prevMonthStats.pctConforme : null, "vs mes ant.");
+
+  /* --- Card 4: Atribución dominante de fallas (sobre el mes en curso) --- */
+  const pctFaltante = monthStats.evaluadas ? Math.round(monthStats.Faltante / monthStats.evaluadas * 1000) / 10 : 0;
+  const pctSobrante = monthStats.evaluadas ? Math.round(monthStats.Sobrante / monthStats.evaluadas * 1000) / 10 : 0;
+  const pctMalEstadoMes = monthStats.evaluadas ? Math.round(monthStats["Mal Estado"] / monthStats.evaluadas * 1000) / 10 : 0;
+  const pctQuiebre = monthStats.evaluadas ? Math.round((monthStats.Faltante + monthStats.Sobrante + monthStats["Mal Estado"]) / monthStats.evaluadas * 1000) / 10 : 0;
+  document.getElementById("otif-atrib-badge").textContent = pctQuiebre + "% Quiebre";
+
+  const categorias = [
+    { label: "Faltantes en Pedidos", otherLabel: "Faltantes", count: monthStats.Faltante, pct: pctFaltante, filterValue: "Faltante" },
+    { label: "Sobrantes en Pedidos", otherLabel: "Sobrantes", count: monthStats.Sobrante, pct: pctSobrante, filterValue: "Sobrante" },
+    { label: "Mal Estado en Pedidos", otherLabel: "Mal Estado", count: monthStats["Mal Estado"], pct: pctMalEstadoMes, filterValue: "Mal Estado" }
+  ].sort((a, b) => b.count - a.count);
+
+  let dominant, dominantPct, filterValue;
+  if (categorias[0].count === 0) {
+    dominant = "Sin incidencias en el mes"; dominantPct = 0; filterValue = "all";
+  } else {
+    dominant = categorias[0].label; dominantPct = categorias[0].pct; filterValue = categorias[0].filterValue;
+  }
+
+  document.getElementById("otif-atrib-title").textContent = dominant;
+  document.getElementById("otif-atrib-subtitle").textContent = dominantPct + "% de incidencias del período (" + MESES_ES[monthNum-1] + ")";
+  document.getElementById("otif-atrib-other1").textContent = categorias[1].otherLabel + ": " + categorias[1].pct + "%";
+  document.getElementById("otif-atrib-other2").textContent = categorias[2].otherLabel + ": " + categorias[2].pct + "%";
+  document.getElementById("otif-atrib-bar-faltante").style.width = pctFaltante + "%";
+  document.getElementById("otif-atrib-bar-sobrante").style.width = pctSobrante + "%";
+  document.getElementById("otif-atrib-bar-malestado").style.width = pctMalEstadoMes + "%";
+  const impacto = Math.round(monthStats.obsFaltante + monthStats.obsSobrante + monthStats.obsMalEstado);
+  document.getElementById("otif-atrib-impacto").textContent = impacto.toLocaleString("es-PE") + " unidades";
+
+  const verAuditoriaBtn = document.getElementById("otif-atrib-ver-auditoria");
+  verAuditoriaBtn.onclick = () => {
+    document.getElementById("filter-estatus").value = filterValue;
+    if (document.getElementById("filter-mes")) document.getElementById("filter-mes").value = monthKey;
+    currentPage = 1;
+    renderAll();
+    document.querySelector("#table-search")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+}
+
+/* ---------- Vista: Monitoreo de Incidencias ---------- */
+const TIPOS_INCIDENCIA = ["Faltante", "Sobrante", "Mal Estado"];
+
+function getIncidenceRows() {
+  return ROWS.filter(r => TIPOS_INCIDENCIA.includes(estatusOf(r)));
+}
+
+function renderIncidencias() {
+  const all = getIncidenceRows();
+
+  // Contadores globales (no dependen de los filtros propios de esta vista)
+  let cPend = 0, cCurso = 0, cCerr = 0, cProcede = 0, cNoProcede = 0, cSinResolver = 0;
+  all.forEach(r => {
+    const est = (r.ESTADO_INCIDENCIA || "").trim();
+    if (est === "Pendiente" || est === "") cPend++;
+    else if (est === "En Curso") cCurso++;
+    else if (est === "Cerrado") cCerr++;
+
+    const ver = (r.VEREDICTO || "").trim();
+    if (!VEREDICTOS_VALIDOS.includes(ver)) cSinResolver++;
+    else if (ver === "Conforme") cNoProcede++;
+    else cProcede++; // Faltante, Sobrante o Mal Estado confirmados
+  });
+  document.getElementById("inc-count-pendiente").textContent = cPend.toLocaleString("es-PE");
+  document.getElementById("inc-count-encurso").textContent = cCurso.toLocaleString("es-PE");
+  document.getElementById("inc-count-cerrado").textContent = cCerr.toLocaleString("es-PE");
+  document.getElementById("inc-count-procede").textContent = cProcede.toLocaleString("es-PE");
+  document.getElementById("inc-count-noprocede").textContent = cNoProcede.toLocaleString("es-PE");
+  document.getElementById("inc-count-sinresolver").textContent = cSinResolver.toLocaleString("es-PE");
+
+  // Filtros propios de esta vista
+  const q = (document.getElementById("inc-search").value || "").toLowerCase().trim();
+  const tipoF = document.getElementById("inc-filter-tipo").value;
+  const estF = document.getElementById("inc-filter-estado").value;
+  const verF = document.getElementById("inc-filter-veredicto").value;
+
+  const filtered = all.filter(r => {
+    if (tipoF !== "all" && estatusOf(r) !== tipoF) return false;
+    const estadoInc = (r.ESTADO_INCIDENCIA || "").trim();
+    if (estF !== "all") {
+      if (estF === "(vacio)" ? estadoInc !== "" : estadoInc !== estF) return false;
+    }
+    const veredicto = (r.VEREDICTO || "").trim();
+    if (verF !== "all") {
+      if (verF === "(vacio)" ? VEREDICTOS_VALIDOS.includes(veredicto) : veredicto !== verF) return false;
+    }
+    if (q) {
+      const hay = (r.PEDIDO_BPCS + " " + r.DOCUMENTO + " " + r.CODIGO + " " + r.DESCRIPCION).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  filtered.sort((a, b) => (b.FECHA_CREACION || "").localeCompare(a.FECHA_CREACION || ""));
+
+  const tbody = document.getElementById("inc-tbody");
+  tbody.innerHTML = "";
+  filtered.forEach(r => {
+    const est = estatusOf(r); // estatus reportado originalmente (histórico, no cambia con el veredicto)
+    const estadoInc = r.ESTADO_INCIDENCIA || "";
+    const veredicto = r.VEREDICTO || "";
+    const isSelected = selectedRows.has(r._sheetRow);
+    const tr = document.createElement("tr");
+    tr.className = "hover:bg-surface-container-low/60 transition-colors" + (isSelected ? " row-selected" : "");
+    tr.innerHTML = `
+      <td class="py-space-md px-space-md">
+        <input type="checkbox" class="inc-row-checkbox" data-row="${r._sheetRow}" ${isSelected ? "checked" : ""}>
+      </td>
+      <td class="py-space-md px-space-md">
+        <div class="flex flex-col">
+          <span class="font-bold text-on-surface font-label-md text-label-md">${fmtDateDisplay(r.FECHA_CREACION)}</span>
+          <span class="text-[11px] text-on-surface-variant">BPCS ${r.PEDIDO_BPCS} • Doc. ${r.DOCUMENTO}</span>
+        </div>
+      </td>
+      <td class="py-space-md px-space-md"><span class="text-[12px] text-on-surface">${r.DESTINATARIO || "-"}</span></td>
+      <td class="py-space-md px-space-md">
+        <div class="flex flex-col">
+          <span class="font-mono text-[12px] font-semibold text-on-surface">${r.CODIGO}</span>
+          <span class="text-[11px] text-on-surface-variant">${r.DESCRIPCION}</span>
+        </div>
+      </td>
+      <td class="py-space-md px-space-md text-center">
+        <span class="inline-flex items-center px-space-sm py-1 rounded font-label-sm text-label-sm font-bold ${badgeClass(est)}">${est}</span>
+      </td>
+      <td class="py-space-md px-space-md">
+        <select class="inc-veredicto-select px-space-sm py-1.5 bg-surface-container-low rounded-lg text-[12px] font-semibold focus:outline-none" data-row="${r._sheetRow}">
+          <option value="" ${veredicto === "" ? "selected" : ""}>Sin resolver</option>
+          <option value="Conforme" ${veredicto === "Conforme" ? "selected" : ""}>Conforme (No Procede)</option>
+          <option value="Faltante" ${veredicto === "Faltante" ? "selected" : ""}>Faltante (Procede)</option>
+          <option value="Sobrante" ${veredicto === "Sobrante" ? "selected" : ""}>Sobrante (Procede)</option>
+          <option value="Mal Estado" ${veredicto === "Mal Estado" ? "selected" : ""}>Mal Estado (Procede)</option>
+        </select>
+      </td>
+      <td class="py-space-md px-space-md">
+        <div class="flex flex-col">
+          <span class="text-[12px] text-on-surface">${r.OBSERVACION || "-"}</span>
+          <span class="text-[11px] text-on-surface-variant">${r.PERSONAL_REPORTA || ""}</span>
+        </div>
+      </td>
+      <td class="py-space-md px-space-md text-right font-semibold">${r.CANTIDAD_OBSERVADA || "0"}</td>
+      <td class="py-space-md px-space-md">
+        <select class="inc-estado-select px-space-sm py-1.5 bg-surface-container-low rounded-lg text-[12px] font-semibold focus:outline-none" data-row="${r._sheetRow}">
+          <option value="" ${estadoInc === "" ? "selected" : ""}>Sin asignar</option>
+          <option value="Pendiente" ${estadoInc === "Pendiente" ? "selected" : ""}>Pendiente</option>
+          <option value="En Curso" ${estadoInc === "En Curso" ? "selected" : ""}>En Curso</option>
+          <option value="Cerrado" ${estadoInc === "Cerrado" ? "selected" : ""}>Cerrado</option>
+        </select>
+      </td>
+      <td class="py-space-md px-space-md"><span class="text-[11px] text-on-surface-variant">${r.FECHA_ESTADO || "-"}</span></td>
+      <td class="py-space-md px-space-md text-right">
+        <button class="btn-edit-inc p-1.5 rounded-lg hover:bg-surface-container-high transition-colors ${actionIconColor(est)}" data-row="${r._sheetRow}" type="button" title="Ver / Editar línea">
+          <span class="material-symbols-outlined text-[20px]">${actionIcon(est)}</span>
+        </button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+
+  LAST_FILTERED_INCIDENCIAS = filtered;
+  document.getElementById("inc-summary").textContent = `Mostrando ${filtered.length.toLocaleString("es-PE")} de ${all.length.toLocaleString("es-PE")} incidencias`;
+
+  document.querySelectorAll(".btn-edit-inc").forEach(btn => {
+    btn.addEventListener("click", () => openModal(parseInt(btn.dataset.row, 10)));
+  });
+  document.querySelectorAll(".inc-estado-select").forEach(sel => {
+    sel.addEventListener("change", () => handleIncidenceStatusChange(sel));
+  });
+  document.querySelectorAll(".inc-veredicto-select").forEach(sel => {
+    sel.addEventListener("change", () => handleVeredictoChange(sel));
+  });
+  document.querySelectorAll(".inc-row-checkbox").forEach(cb => {
+    cb.addEventListener("change", () => {
+      const rowId = parseInt(cb.dataset.row, 10);
+      if (cb.checked) selectedRows.add(rowId); else selectedRows.delete(rowId);
+      cb.closest("tr").classList.toggle("row-selected", cb.checked);
+      updateIncSelectAllState();
+      updateIncBulkBar();
+    });
+  });
+  updateIncSelectAllState();
+  updateIncBulkBar();
+}
+
+let LAST_FILTERED_INCIDENCIAS = [];
+
+function updateIncSelectAllState() {
+  const selectAll = document.getElementById("inc-select-all");
+  if (!selectAll) return;
+  selectAll.checked = LAST_FILTERED_INCIDENCIAS.length > 0 && LAST_FILTERED_INCIDENCIAS.every(r => selectedRows.has(r._sheetRow));
+}
+
+function updateIncBulkBar() {
+  const bar = document.getElementById("inc-bulk-bar");
+  const countEl = document.getElementById("inc-bulk-count");
+  if (!bar || !countEl) return;
+  const selectedInView = LAST_FILTERED_INCIDENCIAS.filter(r => selectedRows.has(r._sheetRow)).length;
+  countEl.textContent = selectedInView;
+  bar.classList.toggle("hidden", selectedInView === 0);
+  bar.classList.toggle("flex", selectedInView > 0);
+}
+
+document.getElementById("inc-select-all").addEventListener("change", (e) => {
+  if (e.target.checked) LAST_FILTERED_INCIDENCIAS.forEach(r => selectedRows.add(r._sheetRow));
+  else LAST_FILTERED_INCIDENCIAS.forEach(r => selectedRows.delete(r._sheetRow));
+  renderIncidencias();
+});
+document.getElementById("inc-export-xlsx-btn").addEventListener("click", () => exportXLSX(LAST_FILTERED_INCIDENCIAS, "incidencias"));
+document.getElementById("inc-bulk-export-btn").addEventListener("click", () => {
+  const selected = LAST_FILTERED_INCIDENCIAS.filter(r => selectedRows.has(r._sheetRow));
+  exportXLSX(selected, "incidencias_seleccionadas");
+});
+document.getElementById("inc-bulk-clear-btn").addEventListener("click", () => {
+  LAST_FILTERED_INCIDENCIAS.forEach(r => selectedRows.delete(r._sheetRow));
+  renderIncidencias();
+});
+
+async function handleIncidenceStatusChange(selectEl) {
+  const sheetRow = parseInt(selectEl.dataset.row, 10);
+  const row = ROWS.find(r => r._sheetRow === sheetRow);
+  if (!row) return;
+  const nuevoEstado = selectEl.value;
+  const previo = row.ESTADO_INCIDENCIA || "";
+
+  if (!CONFIG.APPS_SCRIPT_URL) {
+    showToast("Modo solo lectura", "Configura APPS_SCRIPT_URL para poder guardar cambios.");
+    selectEl.value = previo;
+    return;
+  }
+  const password = window.prompt("Clave para guardar el cambio de estado de la incidencia:");
+  if (password === null) { selectEl.value = previo; return; }
+
+  const fechaEstado = new Date().toLocaleString("es-PE");
+  const payload = {
+    action: "update",
+    password: password,
+    sheetRow: row._sheetRow,
+    idPedido: row.ID_PEDIDO,
+    documento: row.DOCUMENTO,
+    codigo: row.CODIGO,
+    ESTADO_INCIDENCIA: nuevoEstado,
+    FECHA_ESTADO: fechaEstado
+  };
+  try {
+    const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "Error desconocido");
+    row.ESTADO_INCIDENCIA = nuevoEstado;
+    row.FECHA_ESTADO = fechaEstado;
+    showToast("Estado actualizado", `Incidencia de ${row.CODIGO} → "${nuevoEstado || "Sin asignar"}".`);
+    renderIncidencias();
+  } catch (err) {
+    console.error(err);
+    showToast("Error al actualizar", err.message);
+    selectEl.value = previo;
+  }
+}
+
+async function handleVeredictoChange(selectEl) {
+  const sheetRow = parseInt(selectEl.dataset.row, 10);
+  const row = ROWS.find(r => r._sheetRow === sheetRow);
+  if (!row) return;
+  const nuevoVeredicto = selectEl.value;
+  const previo = row.VEREDICTO || "";
+
+  if (!CONFIG.APPS_SCRIPT_URL) {
+    showToast("Modo solo lectura", "Configura APPS_SCRIPT_URL para poder guardar cambios.");
+    selectEl.value = previo;
+    return;
+  }
+  const password = window.prompt("Clave para guardar el Veredicto (esto puede cambiar el OTIF):");
+  if (password === null) { selectEl.value = previo; return; }
+
+  const payload = {
+    action: "update",
+    password: password,
+    sheetRow: row._sheetRow,
+    idPedido: row.ID_PEDIDO,
+    documento: row.DOCUMENTO,
+    codigo: row.CODIGO,
+    VEREDICTO: nuevoVeredicto
+  };
+  try {
+    const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "Error desconocido");
+    row.VEREDICTO = nuevoVeredicto;
+    const msg = nuevoVeredicto === "" ? "Sin resolver"
+      : nuevoVeredicto === "Conforme" ? "Conforme (No Procede)"
+      : nuevoVeredicto + " (Procede)";
+    showToast("Veredicto guardado", `${row.CODIGO}: ${msg}. El OTIF se recalculó.`);
+    renderIncidencias();
+    renderAll(); // el veredicto puede cambiar el OTIF en todo el Tablero
+  } catch (err) {
+    console.error(err);
+    showToast("Error al actualizar", err.message);
+    selectEl.value = previo;
+  }
+}
+
+/* ---------- Vista: Cuadros Resumen ---------- */
+function getResumenBaseRows() {
+  const bodegaFilter = document.getElementById("filter-bodega").value;
+  return ROWS.filter(r => bodegaFilter === "all" || r.BODEGA === bodegaFilter);
+}
+
+function pct(part, total) {
+  return total ? Math.round((part / total) * 10000) / 100 : 100;
+}
+
+// Agrupa filas en "buckets" (por mes o por bodega) y devuelve, para cada bucket,
+// el conteo de pedidos únicos (BPCS) solicitados y su clasificación por peor estatus efectivo.
+function summarizeByBucket(rows, bucketFn, labelFn) {
+  const buckets = {};
+  rows.forEach(r => {
+    const key = bucketFn(r);
+    if (key === null) return;
+    if (!buckets[key]) buckets[key] = [];
+    buckets[key].push(r);
+  });
+  return Object.keys(buckets).sort().map(key => {
+    const orders = groupByPedido(buckets[key]); // ya usa estatusEfectivo() internamente
+    const solicitados = orders.length;
+    const faltante = orders.filter(o => o.estGrupo === "Faltante").length;
+    const sobrante = orders.filter(o => o.estGrupo === "Sobrante").length;
+    const malestado = orders.filter(o => o.estGrupo === "Mal Estado").length;
+    const incidencia = faltante + sobrante + malestado;
+    return { key, label: labelFn(key), solicitados, faltante, sobrante, malestado, incidencia, pctCumpl: pct(solicitados - incidencia, solicitados) };
+  });
+}
+
+function monthBucketKey(r) {
+  return /^\d{8}$/.test(r.FECHA_CREACION) ? r.FECHA_CREACION.slice(0, 6) : null;
+}
+function monthBucketLabel(mk) {
+  const y = mk.slice(0, 4), m = parseInt(mk.slice(4, 6), 10);
+  return MESES_ES[m - 1] + " " + y;
+}
+
+function renderCuadrosResumen() {
+  const base = getResumenBaseRows();
+
+  /* --- Cuadro 1 y 2: por mes --- */
+  const monthly = summarizeByBucket(base, monthBucketKey, monthBucketLabel);
+
+  const tbody1 = document.getElementById("tbl-resumen-mensual-body");
+  const tbody2 = document.getElementById("tbl-resumen-tipo-body");
+  tbody1.innerHTML = "";
+  tbody2.innerHTML = "";
+  let totSol = 0, totInc = 0;
+  monthly.forEach((m, i) => {
+    totSol += m.solicitados; totInc += m.incidencia;
+    tbody1.innerHTML += `<tr>
+      <td class="py-space-sm px-space-md text-center">${i + 1}</td>
+      <td class="py-space-sm px-space-md font-semibold">${m.label}</td>
+      <td class="py-space-sm px-space-md text-right">${m.solicitados.toLocaleString("es-PE")}</td>
+      <td class="py-space-sm px-space-md text-right">${m.incidencia.toLocaleString("es-PE")}</td>
+      <td class="py-space-sm px-space-md text-right font-bold ${m.pctCumpl < 95 ? "text-error" : "text-on-tertiary-container"}">${m.pctCumpl.toFixed(2)}%</td>
+    </tr>`;
+    tbody2.innerHTML += `<tr>
+      <td class="py-space-sm px-space-md text-center">${i + 1}</td>
+      <td class="py-space-sm px-space-md font-semibold">${m.label}</td>
+      <td class="py-space-sm px-space-md text-right">${m.solicitados.toLocaleString("es-PE")}</td>
+      <td class="py-space-sm px-space-md text-right text-error font-semibold">${m.faltante.toLocaleString("es-PE")}</td>
+      <td class="py-space-sm px-space-md text-right text-secondary font-semibold">${m.sobrante.toLocaleString("es-PE")}</td>
+      <td class="py-space-sm px-space-md text-right text-amber-600 font-semibold">${m.malestado.toLocaleString("es-PE")}</td>
+      <td class="py-space-sm px-space-md text-right font-bold ${m.pctCumpl < 95 ? "text-error" : "text-on-tertiary-container"}">${m.pctCumpl.toFixed(2)}%</td>
+    </tr>`;
+  });
+  document.getElementById("tbl-resumen-mensual-total-sol").textContent = totSol.toLocaleString("es-PE");
+  document.getElementById("tbl-resumen-mensual-total-inc").textContent = totInc.toLocaleString("es-PE");
+  document.getElementById("tbl-resumen-mensual-total-pct").textContent = pct(totSol - totInc, totSol).toFixed(2) + "%";
+
+  /* --- Cuadro 3: por bodega --- */
+  const byBodega = summarizeByBucket(base, r => r.BODEGA || "(sin bodega)", k => k);
+  const tbody3 = document.getElementById("tbl-resumen-bodega-body");
+  tbody3.innerHTML = "";
+  byBodega.forEach((b, i) => {
+    tbody3.innerHTML += `<tr>
+      <td class="py-space-sm px-space-md text-center">${i + 1}</td>
+      <td class="py-space-sm px-space-md font-semibold">${b.label}</td>
+      <td class="py-space-sm px-space-md text-right">${b.solicitados.toLocaleString("es-PE")}</td>
+      <td class="py-space-sm px-space-md text-right text-error font-semibold">${b.faltante.toLocaleString("es-PE")}</td>
+      <td class="py-space-sm px-space-md text-right text-secondary font-semibold">${b.sobrante.toLocaleString("es-PE")}</td>
+      <td class="py-space-sm px-space-md text-right text-amber-600 font-semibold">${b.malestado.toLocaleString("es-PE")}</td>
+      <td class="py-space-sm px-space-md text-right font-bold ${b.pctCumpl < 95 ? "text-error" : "text-on-tertiary-container"}">${b.pctCumpl.toFixed(2)}%</td>
+    </tr>`;
+  });
+
+  /* --- Cuadro 4: veredictos por mes (sobre las incidencias reportadas, estatus ORIGINAL) --- */
+  const incidences = base.filter(r => TIPOS_INCIDENCIA.includes(estatusOf(r)));
+  const byMonthVer = {};
+  incidences.forEach(r => {
+    const mk = monthBucketKey(r);
+    if (mk === null) return;
+    if (!byMonthVer[mk]) byMonthVer[mk] = [];
+    byMonthVer[mk].push(r);
+  });
+  const tbody4 = document.getElementById("tbl-resumen-veredicto-body");
+  tbody4.innerHTML = "";
+  Object.keys(byMonthVer).sort().forEach((mk, i) => {
+    const rows = byMonthVer[mk];
+    let procede = 0, noProcede = 0, sinResolver = 0;
+    rows.forEach(r => {
+      const v = (r.VEREDICTO || "").trim();
+      if (!VEREDICTOS_VALIDOS.includes(v)) sinResolver++;
+      else if (v === "Conforme") noProcede++;
+      else procede++;
+    });
+    tbody4.innerHTML += `<tr>
+      <td class="py-space-sm px-space-md text-center">${i + 1}</td>
+      <td class="py-space-sm px-space-md font-semibold">${monthBucketLabel(mk)}</td>
+      <td class="py-space-sm px-space-md text-right">${rows.length.toLocaleString("es-PE")}</td>
+      <td class="py-space-sm px-space-md text-right text-error font-semibold">${procede.toLocaleString("es-PE")}</td>
+      <td class="py-space-sm px-space-md text-right text-on-tertiary-container font-semibold">${noProcede.toLocaleString("es-PE")}</td>
+      <td class="py-space-sm px-space-md text-right text-outline font-semibold">${sinResolver.toLocaleString("es-PE")}</td>
+    </tr>`;
+  });
+
+  // Guardado para exportar a Excel con los mismos datos ya calculados
+  LAST_RESUMEN = { monthly, byBodega, veredictoByMonth: Object.keys(byMonthVer).sort().map(mk => {
+    const rows = byMonthVer[mk];
+    let procede = 0, noProcede = 0, sinResolver = 0;
+    rows.forEach(r => {
+      const v = (r.VEREDICTO || "").trim();
+      if (!VEREDICTOS_VALIDOS.includes(v)) sinResolver++;
+      else if (v === "Conforme") noProcede++;
+      else procede++;
+    });
+    return { label: monthBucketLabel(mk), total: rows.length, procede, noProcede, sinResolver };
+  }) };
+}
+
+let LAST_RESUMEN = { monthly: [], byBodega: [], veredictoByMonth: [] };
+
+const XLSX_THIN = { style: "thin", color: { rgb: "9AA0A6" } };
+const XLSX_BORDER_ALL = { top: XLSX_THIN, bottom: XLSX_THIN, left: XLSX_THIN, right: XLSX_THIN };
+const XLSX_HEADER_STYLE = {
+  font: { bold: true, color: { rgb: "FFFFFF" } },
+  fill: { fgColor: { rgb: "2F6F62" } },
+  alignment: { horizontal: "center", vertical: "center" },
+  border: XLSX_BORDER_ALL
+};
+function xlsxCell(v, style, numeric) {
+  return { v: v === undefined || v === null ? "" : v, t: numeric ? "n" : "s", s: style };
+}
+function xlsxDataStyle(numeric, extra) {
+  return Object.assign({ border: XLSX_BORDER_ALL, alignment: { vertical: "center", horizontal: numeric ? "right" : "left" } }, extra || {});
+}
+// headers: ["Col1","Col2",...] ; rows: [[{v,numeric,bad}], ...] "bad"=true pinta el texto en rojo (ej. bajo meta)
+function buildStyledSheet(headers, rows, colWidths) {
+  const aoa = [headers.map(h => xlsxCell(h, XLSX_HEADER_STYLE))];
+  rows.forEach(r => {
+    aoa.push(r.map(c => xlsxCell(c.v, xlsxDataStyle(!!c.numeric, c.bad ? { font: { bold: true, color: { rgb: "C00000" } } } : (c.bold ? { font: { bold: true } } : {})), !!c.numeric)));
+  });
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws["!freeze"] = { xSplit: 0, ySplit: 1 };
+  if (colWidths) ws["!cols"] = colWidths.map(w => ({ wch: w }));
+  return ws;
+}
+
+function exportResumenXLSX() {
+  if (!window.XLSX) { alert("La librería de Excel no cargó. Verifica tu conexión a internet."); return; }
+  const wb = XLSX.utils.book_new();
+  const META = CONFIG.META_CONFORME;
+
+  const ws1 = buildStyledSheet(
+    ["Mes", "Pedidos Solicitados", "Incidencia", "% Cumplimiento"],
+    LAST_RESUMEN.monthly.map(m => [
+      { v: m.label }, { v: m.solicitados, numeric: true }, { v: m.incidencia, numeric: true },
+      { v: m.pctCumpl.toFixed(2) + "%", bad: m.pctCumpl < META }
+    ]),
+    [16, 20, 14, 16]
+  );
+  XLSX.utils.book_append_sheet(wb, ws1, "Resumen Mensual");
+
+  const ws2 = buildStyledSheet(
+    ["Mes", "Pedidos Solicitados", "Faltante", "Sobrante", "Mal Estado", "% Cumplimiento"],
+    LAST_RESUMEN.monthly.map(m => [
+      { v: m.label }, { v: m.solicitados, numeric: true }, { v: m.faltante, numeric: true },
+      { v: m.sobrante, numeric: true }, { v: m.malestado, numeric: true },
+      { v: m.pctCumpl.toFixed(2) + "%", bad: m.pctCumpl < META }
+    ]),
+    [16, 20, 12, 12, 12, 16]
+  );
+  XLSX.utils.book_append_sheet(wb, ws2, "Por Tipo Incidencia");
+
+  const ws3 = buildStyledSheet(
+    ["Bodega", "Pedidos Solicitados", "Faltante", "Sobrante", "Mal Estado", "% Cumplimiento"],
+    LAST_RESUMEN.byBodega.map(b => [
+      { v: b.label }, { v: b.solicitados, numeric: true }, { v: b.faltante, numeric: true },
+      { v: b.sobrante, numeric: true }, { v: b.malestado, numeric: true },
+      { v: b.pctCumpl.toFixed(2) + "%", bad: b.pctCumpl < META }
+    ]),
+    [16, 20, 12, 12, 12, 16]
+  );
+  XLSX.utils.book_append_sheet(wb, ws3, "Por Bodega");
+
+  const ws4 = buildStyledSheet(
+    ["Mes", "Incidencias Reportadas", "Proceden", "No Proceden", "Sin Resolver"],
+    LAST_RESUMEN.veredictoByMonth.map(v => [
+      { v: v.label }, { v: v.total, numeric: true }, { v: v.procede, numeric: true },
+      { v: v.noProcede, numeric: true }, { v: v.sinResolver, numeric: true }
+    ]),
+    [16, 22, 12, 14, 14]
+  );
+  XLSX.utils.book_append_sheet(wb, ws4, "Veredictos por Mes");
+
+  XLSX.writeFile(wb, `OTIF_Kamill_CuadrosResumen_${Date.now()}.xlsx`);
+  showToast("Descarga lista", "Cuadros Resumen exportados a Excel (4 hojas, con formato).");
+}
+document.getElementById("res-export-xlsx-btn").addEventListener("click", exportResumenXLSX);
+
+/* ---------- Vista: Reporte de Inventarios (Sheet de saldo, solo lectura) ---------- */
+async function loadInventario() {
+  const icon = document.getElementById("inv-refresh-icon");
+  icon.classList.add("spin");
+  try {
+    const res = await fetch(CONFIG.INVENTARIO_CSV_URL + (CONFIG.INVENTARIO_CSV_URL.includes("?") ? "&" : "?") + "_ts=" + Date.now());
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const text = await res.text();
+    const rawRows = parseCSV(text);
+    const headerRowRaw = rawRows[0] || [];
+    const colIndexByKey = {};
+    headerRowRaw.forEach((h, i) => {
+      const key = INVENTARIO_HEADER_MAP[String(h).trim().toUpperCase()];
+      if (key) colIndexByKey[key] = i;
+    });
+    const dataRows = rawRows.slice(1);
+    INVENTARIO_ROWS = dataRows
+      .filter(cells => cells.some(c => (c || "").trim() !== ""))
+      .map(cells => {
+        const obj = {};
+        Object.values(INVENTARIO_HEADER_MAP).forEach(key => {
+          const i = colIndexByKey[key];
+          obj[key] = (i !== undefined && cells[i] !== undefined) ? cells[i].trim() : "";
+        });
+        return obj;
+      });
+    inventarioCargado = true;
+    showToast("Saldo de almacén actualizado", INVENTARIO_ROWS.length.toLocaleString("es-PE") + " filas cargadas.");
+  } catch (err) {
+    console.error(err);
+    showToast("Error al cargar saldo", "No se pudo leer el Sheet de inventario: " + err.message);
+  } finally {
+    icon.classList.remove("spin");
+    renderInventarioReport();
+  }
+}
+
+// Códigos con al menos una incidencia (Faltante/Sobrante/Mal Estado) reportada
+// y cuyo Estado de la Incidencia NO sea "Cerrado" (blanco, Pendiente y En Curso sí cuentan).
+function getCodigosConIncidenciaAbierta() {
+  const set = new Set();
+  ROWS.forEach(r => {
+    if (!TIPOS_INCIDENCIA.includes(estatusOf(r))) return;
+    const estadoInc = (r.ESTADO_INCIDENCIA || "").trim();
+    if (estadoInc === "Cerrado") return;
+    if (r.CODIGO) set.add(r.CODIGO.trim());
+  });
+  return set;
+}
+
+let LAST_INVENTARIO_GRUPOS = [];
+
+function renderInventarioReport() {
+  const codigos = getCodigosConIncidenciaAbierta();
+  const filas = INVENTARIO_ROWS.filter(r => codigos.has((r.CODIGO || "").trim()));
+
+  // Agrupar por Código, en el mismo orden en que aparecen
+  const gruposMap = new Map();
+  filas.forEach(r => {
+    const key = r.CODIGO || "(sin código)";
+    if (!gruposMap.has(key)) gruposMap.set(key, []);
+    gruposMap.get(key).push(r);
+  });
+  const grupos = Array.from(gruposMap.entries()).map(([codigo, items]) => ({
+    codigo, items, subtotal: items.reduce((s, r) => s + (parseFloat(r.SALDO) || 0), 0)
+  })).sort((a, b) => a.codigo.localeCompare(b.codigo));
+
+  LAST_INVENTARIO_GRUPOS = grupos;
+
+  const totalCantidad = grupos.reduce((s, g) => s + g.subtotal, 0);
+  document.getElementById("inv-count-codigos").textContent = grupos.length.toLocaleString("es-PE");
+  document.getElementById("inv-count-filas").textContent = filas.length.toLocaleString("es-PE");
+  document.getElementById("inv-count-cantidad").textContent = Math.round(totalCantidad).toLocaleString("es-PE");
+
+  const tbody = document.getElementById("tbl-inventario-body");
+  tbody.innerHTML = "";
+  grupos.forEach(g => {
+    g.items.forEach(r => {
+      tbody.innerHTML += `<tr class="hover:bg-surface-container-low/60 transition-colors">
+        <td class="py-space-sm px-space-md border border-outline-variant/30">${r.WHS || "-"}</td>
+        <td class="py-space-sm px-space-md border border-outline-variant/30 font-mono font-semibold">${r.CODIGO}</td>
+        <td class="py-space-sm px-space-md border border-outline-variant/30">${r.DESCRIPCION || "-"}</td>
+        <td class="py-space-sm px-space-md border border-outline-variant/30">${r.LOTE_FISICO || "-"}</td>
+        <td class="py-space-sm px-space-md border border-outline-variant/30">${r.UBICACION || "-"}</td>
+        <td class="py-space-sm px-space-md border border-outline-variant/30 text-right">${r.SALDO || "0"}</td>
+        <td class="py-space-sm px-space-md border border-outline-variant/30 text-center text-outline">&nbsp;</td>
+      </tr>`;
+    });
+    tbody.innerHTML += `<tr class="bg-surface-container-high font-bold">
+      <td class="py-space-sm px-space-md border border-outline-variant/30" colspan="5">Subtotal ${g.codigo}</td>
+      <td class="py-space-sm px-space-md border border-outline-variant/30 text-right">${Math.round(g.subtotal).toLocaleString("es-PE")}</td>
+      <td class="py-space-sm px-space-md border border-outline-variant/30"></td>
+    </tr>`;
+  });
+
+  document.getElementById("inv-empty-msg").classList.toggle("hidden", grupos.length > 0);
+}
+
+function exportInventarioXLSX() {
+  if (!window.XLSX) { alert("La librería de Excel no cargó. Verifica tu conexión a internet."); return; }
+  if (!LAST_INVENTARIO_GRUPOS.length) { alert("No hay códigos con incidencia abierta para exportar."); return; }
+
+  const THIN = { style: "thin", color: { rgb: "9AA0A6" } };
+  const BORDER_ALL = { top: THIN, bottom: THIN, left: THIN, right: THIN };
+  const HEADER_STYLE = {
+    font: { bold: true, color: { rgb: "FFFFFF" } },
+    fill: { fgColor: { rgb: "2F6F62" } },
+    alignment: { horizontal: "center", vertical: "center" },
+    border: BORDER_ALL
+  };
+  const SUBTOTAL_STYLE = {
+    font: { bold: true },
+    fill: { fgColor: { rgb: "D9E7F5" } },
+    border: BORDER_ALL
+  };
+  const CELL_STYLE = { border: BORDER_ALL, alignment: { vertical: "center" } };
+  const CELL_STYLE_NUM = { border: BORDER_ALL, alignment: { vertical: "center", horizontal: "right" } };
+
+  const cell = (v, style, numeric) => ({ v: v === undefined || v === null ? "" : v, t: numeric ? "n" : "s", s: style });
+
+  const aoa = [];
+  aoa.push([
+    cell("WHS", HEADER_STYLE), cell("Código", HEADER_STYLE), cell("Descripción", HEADER_STYLE),
+    cell("Lote", HEADER_STYLE), cell("Ubicación", HEADER_STYLE), cell("Cantidad", HEADER_STYLE), cell("Conteo", HEADER_STYLE)
+  ]);
+
+  LAST_INVENTARIO_GRUPOS.forEach(g => {
+    g.items.forEach(r => {
+      aoa.push([
+        cell(r.WHS || "", CELL_STYLE),
+        cell(r.CODIGO || "", CELL_STYLE),
+        cell(r.DESCRIPCION || "", CELL_STYLE),
+        cell(r.LOTE_FISICO || "", CELL_STYLE),
+        cell(r.UBICACION || "", CELL_STYLE),
+        cell(parseFloat(r.SALDO) || 0, CELL_STYLE_NUM, true),
+        cell("", CELL_STYLE)
+      ]);
+    });
+    aoa.push([
+      cell("", SUBTOTAL_STYLE),
+      cell("Subtotal " + g.codigo, SUBTOTAL_STYLE),
+      cell("", SUBTOTAL_STYLE),
+      cell("", SUBTOTAL_STYLE),
+      cell("", SUBTOTAL_STYLE),
+      cell(Math.round(g.subtotal * 100) / 100, { ...SUBTOTAL_STYLE, alignment: { horizontal: "right" } }, true),
+      cell("", SUBTOTAL_STYLE)
+    ]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws["!cols"] = [{ wch: 8 }, { wch: 16 }, { wch: 42 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 10 }];
+  ws["!freeze"] = { xSplit: 0, ySplit: 1 };
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Inventario Incidencias");
+  XLSX.writeFile(wb, `OTIF_Kamill_ReporteInventario_${Date.now()}.xlsx`);
+  showToast("Descarga lista", "Detalle de inventario exportado a Excel con formato.");
+}
+
+document.getElementById("inv-refresh-btn").addEventListener("click", loadInventario);
+document.getElementById("inv-export-xlsx-btn").addEventListener("click", exportInventarioXLSX);
+
+
+/* ---------- Cambio de pestañas (vistas) ---------- */
+function switchView(viewId) {
+  if (!viewId) {
+    showToast("Vista en construcción", "Esta sección todavía no está desarrollada.");
+    return;
+  }
+  document.querySelectorAll('[id^="view-"]').forEach(el => {
+    el.classList.toggle("hidden", el.id !== viewId);
+    el.classList.toggle("flex", el.id === viewId);
+  });
+  document.querySelectorAll(".nav-link").forEach(a => {
+    const active = a.dataset.view === viewId;
+    a.className = "nav-link px-space-md py-space-xs rounded-lg transition-colors " +
+      (active ? "bg-primary-container text-on-primary font-bold" : "font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface");
+  });
+  if (viewId === "view-incidencias") renderIncidencias();
+  if (viewId === "view-resumen") renderCuadrosResumen();
+  if (viewId === "view-inventario") {
+    if (!inventarioCargado) loadInventario();
+    else renderInventarioReport();
+  }
+}
+document.querySelectorAll(".nav-link").forEach(a => {
+  a.addEventListener("click", (e) => { e.preventDefault(); switchView(a.dataset.view); });
+});
+document.getElementById("inc-search").addEventListener("input", renderIncidencias);
+document.getElementById("inc-filter-tipo").addEventListener("change", renderIncidencias);
+document.getElementById("inc-filter-estado").addEventListener("change", renderIncidencias);
+document.getElementById("inc-filter-veredicto").addEventListener("change", renderIncidencias);
+document.getElementById("inc-clear-filters").addEventListener("click", () => {
+  document.getElementById("inc-search").value = "";
+  document.getElementById("inc-filter-tipo").value = "all";
+  document.getElementById("inc-filter-estado").value = "all";
+  document.getElementById("inc-filter-veredicto").value = "all";
+  renderIncidencias();
+});
+
+function renderAll() {
+  const filtered = getFiltered();
+  renderOtifTimeCards(filtered);
+  renderKPIs(filtered);
+  renderChart(filtered);
+  renderTable(filtered);
+  if (!document.getElementById("view-incidencias").classList.contains("hidden")) renderIncidencias();
+  if (!document.getElementById("view-resumen").classList.contains("hidden")) renderCuadrosResumen();
+}
+
+/* ---------- Modal de edición ---------- */
+const MODAL_LOCK_PASSWORD = "odbg";
+let modalUnlocked = false; // una vez desbloqueado, se mantiene así durante la sesión
+
+function showModalLock() {
+  document.getElementById("modal-lock-overlay").classList.remove("hidden");
+  document.getElementById("modal-lock-password").value = "";
+  document.getElementById("modal-lock-error").classList.add("hidden");
+  setTimeout(() => document.getElementById("modal-lock-password").focus(), 50);
+}
+function hideModalLock() {
+  document.getElementById("modal-lock-overlay").classList.add("hidden");
+}
+function attemptUnlock() {
+  const val = document.getElementById("modal-lock-password").value;
+  if (val === MODAL_LOCK_PASSWORD) {
+    modalUnlocked = true;
+    hideModalLock();
+  } else {
+    document.getElementById("modal-lock-error").classList.remove("hidden");
+  }
+}
+document.getElementById("modal-lock-btn").addEventListener("click", attemptUnlock);
+document.getElementById("modal-lock-password").addEventListener("keydown", (e) => { if (e.key === "Enter") attemptUnlock(); });
+
+function openModal(sheetRow) {
+  const r = ROWS.find(x => x._sheetRow === sheetRow);
+  if (!r) return;
+  currentEditRow = r;
+  document.getElementById("modal-subtitle").textContent =
+    `BPCS ${r.PEDIDO_BPCS} • Documento ${r.DOCUMENTO} • ${r.CODIGO} - ${r.DESCRIPCION}`;
+  document.getElementById("f-estatus").value = r.ESTATUS || "";
+  document.getElementById("f-fecha").value = fmtDateInput(r.FECHA);
+  document.getElementById("f-observacion").value = r.OBSERVACION || "";
+  document.getElementById("f-cantidad").value = r.CANTIDAD_OBSERVADA || "";
+  document.getElementById("f-fecharesp").value = fmtDateInput(r.FECHA_RESPUESTA);
+  document.getElementById("f-respdespacho").value = r.RESPUESTA_DESPACHO || "";
+  document.getElementById("f-personal").value = r.PERSONAL_REPORTA || "";
+  document.getElementById("f-fechaalmacen").value = fmtDateInput(r.FECHA_ALMACEN);
+  document.getElementById("f-respalmacen").value = r.RESPUESTA_ALMACEN || "";
+  document.getElementById("f-acciones").value = r.ACCIONES_TOMADAS || "";
+  document.getElementById("edit-password").value = "";
+  document.getElementById("save-status").textContent = CONFIG.APPS_SCRIPT_URL ? "" :
+    "Modo solo lectura: configura APPS_SCRIPT_URL para poder guardar.";
+  document.getElementById("modal-save").disabled = !CONFIG.APPS_SCRIPT_URL;
+  document.getElementById("modal-save").classList.toggle("opacity-50", !CONFIG.APPS_SCRIPT_URL);
+  if (modalUnlocked) hideModalLock(); else showModalLock();
+  document.getElementById("edit-modal").classList.remove("hidden");
+  document.getElementById("edit-modal").classList.add("flex");
+}
+
+function closeModal() {
+  document.getElementById("edit-modal").classList.add("hidden");
+  document.getElementById("edit-modal").classList.remove("flex");
+  currentEditRow = null;
+}
+
+async function saveModal() {
+  if (!currentEditRow || !CONFIG.APPS_SCRIPT_URL) return;
+  const password = document.getElementById("edit-password").value;
+  if (!password) {
+    const s = document.getElementById("save-status");
+    s.textContent = "Ingresa la clave de edición para guardar.";
+    s.className = "font-label-sm text-label-sm text-error font-semibold";
+    return;
+  }
+  const payload = {
+    action: "update",
+    password: password,
+    sheetRow: currentEditRow._sheetRow,
+    idPedido: currentEditRow.ID_PEDIDO,
+    documento: currentEditRow.DOCUMENTO,
+    codigo: currentEditRow.CODIGO,
+    ESTATUS: document.getElementById("f-estatus").value,
+    FECHA: document.getElementById("f-fecha").value,
+    OBSERVACION: document.getElementById("f-observacion").value,
+    CANTIDAD_OBSERVADA: document.getElementById("f-cantidad").value,
+    FECHA_RESPUESTA: document.getElementById("f-fecharesp").value,
+    RESPUESTA_DESPACHO: document.getElementById("f-respdespacho").value,
+    PERSONAL_REPORTA: document.getElementById("f-personal").value,
+    FECHA_ALMACEN: document.getElementById("f-fechaalmacen").value,
+    RESPUESTA_ALMACEN: document.getElementById("f-respalmacen").value,
+    ACCIONES_TOMADAS: document.getElementById("f-acciones").value
+  };
+  const statusEl = document.getElementById("save-status");
+  statusEl.className = "font-label-sm text-label-sm text-on-surface-variant";
+  statusEl.textContent = "Guardando...";
+  try {
+    const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(() => ({ ok: true }));
+    if (data && data.ok === false) throw new Error(data.error || "Error desconocido");
+    Object.assign(currentEditRow, {
+      ESTATUS: payload.ESTATUS, FECHA: payload.FECHA, OBSERVACION: payload.OBSERVACION,
+      CANTIDAD_OBSERVADA: payload.CANTIDAD_OBSERVADA, FECHA_RESPUESTA: payload.FECHA_RESPUESTA,
+      RESPUESTA_DESPACHO: payload.RESPUESTA_DESPACHO, PERSONAL_REPORTA: payload.PERSONAL_REPORTA,
+      FECHA_ALMACEN: payload.FECHA_ALMACEN, RESPUESTA_ALMACEN: payload.RESPUESTA_ALMACEN,
+      ACCIONES_TOMADAS: payload.ACCIONES_TOMADAS
+    });
+    statusEl.className = "font-label-sm text-label-sm text-on-tertiary-container font-semibold";
+    statusEl.textContent = "Guardado correctamente.";
+    showToast("Cambios guardados", "Pedido #" + (currentEditRow.ID_PEDIDO || "") + " actualizado en el Sheet.");
+    renderAll();
+    setTimeout(closeModal, 700);
+  } catch (err) {
+    console.error(err);
+    statusEl.className = "font-label-sm text-label-sm text-error font-semibold";
+    statusEl.textContent = "Error al guardar: " + err.message;
+  }
+}
+
+/* ---------- Modal: Declarar línea no solicitada (Sobrante) ---------- */
+let currentAddLineBpcs = null;
+
+function openAddLineModal(bpcs) {
+  currentAddLineBpcs = bpcs;
+  const ref = ROWS.find(r => r.PEDIDO_BPCS === bpcs) || {};
+  document.getElementById("addline-subtitle").textContent =
+    `BPCS ${bpcs} • Documento ${ref.DOCUMENTO || "-"} • Destinatario ${ref.DESTINATARIO || "-"}`;
+  document.getElementById("al-codigo").value = "";
+  document.getElementById("al-ean").value = "";
+  document.getElementById("al-descripcion").value = "";
+  document.getElementById("al-cantidad").value = "";
+  document.getElementById("al-observacion").value = "";
+  document.getElementById("al-personal").value = "";
+  document.getElementById("al-password").value = "";
+  document.getElementById("addline-status").textContent = CONFIG.APPS_SCRIPT_URL ? "" :
+    "Modo solo lectura: configura APPS_SCRIPT_URL para poder guardar.";
+  document.getElementById("addline-save").disabled = !CONFIG.APPS_SCRIPT_URL;
+  document.getElementById("addline-save").classList.toggle("opacity-50", !CONFIG.APPS_SCRIPT_URL);
+  document.getElementById("add-line-modal").classList.remove("hidden");
+  document.getElementById("add-line-modal").classList.add("flex");
+}
+
+function closeAddLineModal() {
+  document.getElementById("add-line-modal").classList.add("hidden");
+  document.getElementById("add-line-modal").classList.remove("flex");
+  currentAddLineBpcs = null;
+}
+
+async function saveAddLine() {
+  if (!currentAddLineBpcs || !CONFIG.APPS_SCRIPT_URL) return;
+  const codigo = document.getElementById("al-codigo").value.trim();
+  const descripcion = document.getElementById("al-descripcion").value.trim();
+  const cantidad = document.getElementById("al-cantidad").value;
+  const password = document.getElementById("al-password").value;
+  const statusEl = document.getElementById("addline-status");
+
+  if (!codigo || !descripcion || !cantidad) {
+    statusEl.className = "font-label-sm text-label-sm text-error font-semibold";
+    statusEl.textContent = "Completa Código, Descripción y Cantidad Recibida de Más.";
+    return;
+  }
+  if (!password) {
+    statusEl.className = "font-label-sm text-label-sm text-error font-semibold";
+    statusEl.textContent = "Ingresa la clave de edición para guardar.";
+    return;
+  }
+
+  const ref = ROWS.find(r => r.PEDIDO_BPCS === currentAddLineBpcs) || {};
+  const todayIso = new Date().toISOString().slice(0, 10);
+
+  const payload = {
+    action: "add",
+    password: password,
+    PEDIDO_BPCS: currentAddLineBpcs,
+    FECHA_CREACION: ref.FECHA_CREACION || "",
+    BODEGA: ref.BODEGA || "",
+    DOCUMENTO: ref.DOCUMENTO || "",
+    DESTINATARIO: ref.DESTINATARIO || "",
+    CODIGO: codigo,
+    EAN13: document.getElementById("al-ean").value.trim(),
+    DESCRIPCION: descripcion,
+    UNIDADES: 0,
+    ESTATUS: "Sobrante",
+    FECHA: todayIso,
+    OBSERVACION: document.getElementById("al-observacion").value.trim(),
+    CANTIDAD_OBSERVADA: cantidad,
+    PERSONAL_REPORTA: document.getElementById("al-personal").value.trim()
+  };
+
+  statusEl.className = "font-label-sm text-label-sm text-on-surface-variant";
+  statusEl.textContent = "Guardando...";
+  try {
+    const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "Error desconocido");
+
+    statusEl.className = "font-label-sm text-label-sm text-on-tertiary-container font-semibold";
+    statusEl.textContent = "Línea creada correctamente.";
+    showToast("Línea declarada", `Código ${codigo} agregado como Sobrante al pedido BPCS ${currentAddLineBpcs}.`);
+    if (!expandedOrders.has(currentAddLineBpcs)) expandedOrders.add(currentAddLineBpcs);
+    await loadData(); // recarga desde el Sheet para traer la fila real con su _sheetRow
+    setTimeout(closeAddLineModal, 700);
+  } catch (err) {
+    console.error(err);
+    statusEl.className = "font-label-sm text-label-sm text-error font-semibold";
+    statusEl.textContent = "Error al guardar: " + err.message;
+  }
+}
+
+document.getElementById("addline-close-btn").addEventListener("click", closeAddLineModal);
+document.getElementById("addline-cancel").addEventListener("click", closeAddLineModal);
+document.getElementById("addline-save").addEventListener("click", saveAddLine);
+const EXPORT_HEADERS = ["ID_PEDIDO","FECHA_CREACION","PEDIDO_BPCS","BODEGA","DOCUMENTO","DESTINATARIO","CODIGO","DESCRIPCION","UNIDADES","EAN13","ESTATUS","FECHA","OBSERVACION","CANTIDAD_OBSERVADA","FECHA_RESPUESTA","RESPUESTA_DESPACHO","PERSONAL_REPORTA","FECHA_ALMACEN","RESPUESTA_ALMACEN","ACCIONES_TOMADAS","VEREDICTO","ESTADO_INCIDENCIA","FECHA_ESTADO"];
+
+function exportCSV() {
+  const rows = getFiltered();
+  const esc = v => `"${String(v||"").replace(/"/g,'""')}"`;
+  const lines = [EXPORT_HEADERS.join(",")];
+  rows.forEach(r => lines.push(EXPORT_HEADERS.map(h => esc(r[h])).join(",")));
+  const blob = new Blob([lines.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "control_pedidos_export_" + Date.now() + ".csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast("Descarga CSV lista", rows.length.toLocaleString("es-PE") + " pedidos exportados.");
+}
+
+/* ---------- Exportar Excel (XLSX) ---------- */
+function exportXLSX(rows, filenameSuffix) {
+  if (!window.XLSX) { alert("La librería de Excel no cargó. Verifica tu conexión a internet."); return; }
+  if (!rows.length) { alert("No hay pedidos para exportar con los filtros/selección actuales."); return; }
+
+  const niceHeaders = ["ID Pedido","Fecha Creación","Pedido BPCS","Bodega","Documento","Destinatario","Código","Descripción","Unidades","EAN13","Estatus","Fecha Evaluación","Observación","Cantidad Observada","Fecha Respuesta","Respuesta Despacho","Personal Reporta","Fecha Almacén","Respuesta Almacén","Acciones Tomadas","Veredicto","Estado Incidencia","Fecha de Estado"];
+  const data = rows.map(r => EXPORT_HEADERS.reduce((acc, h) => {
+    acc[niceHeaders[EXPORT_HEADERS.indexOf(h)]] = (h === "ESTATUS") ? estatusOf(r) : (r[h] || "");
+    return acc;
+  }, {}));
+
+  const ws = XLSX.utils.json_to_sheet(data, { header: niceHeaders });
+  ws["!cols"] = niceHeaders.map(h => ({ wch: Math.max(12, h.length + 2) }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Control de Pedidos");
+  XLSX.writeFile(wb, `OTIF_Kamill_${filenameSuffix}_${Date.now()}.xlsx`);
+  showToast("Descarga Excel lista", rows.length.toLocaleString("es-PE") + " pedidos exportados a .xlsx.");
+}
+
+/* ---------- Eventos ---------- */
+document.getElementById("sync-btn").addEventListener("click", () => {
+  const icon = document.getElementById("sync-icon");
+  icon.classList.add("spin");
+  loadData().finally(() => icon.classList.remove("spin"));
+});
+document.getElementById("export-btn").addEventListener("click", exportCSV);
+document.getElementById("export-xlsx-btn").addEventListener("click", () => exportXLSX(getFiltered(), "filtrados"));
+document.getElementById("select-all-rows").addEventListener("change", (e) => {
+  const filtered = getFiltered();
+  if (e.target.checked) filtered.forEach(r => selectedRows.add(r._sheetRow));
+  else filtered.forEach(r => selectedRows.delete(r._sheetRow));
+  renderTable(filtered);
+});
+document.getElementById("bulk-export-btn").addEventListener("click", () => {
+  const selected = ROWS.filter(r => selectedRows.has(r._sheetRow));
+  exportXLSX(selected, "seleccionados");
+});
+document.getElementById("bulk-clear-btn").addEventListener("click", () => {
+  selectedRows.clear();
+  renderTable(getFiltered());
+});
+document.getElementById("table-search").addEventListener("input", () => { currentPage = 1; renderAll(); });
+document.getElementById("filter-estatus").addEventListener("change", () => { currentPage = 1; renderAll(); });
+document.getElementById("filter-bodega").addEventListener("change", () => { currentPage = 1; renderAll(); });
+document.getElementById("filter-mes").addEventListener("change", () => { currentPage = 1; renderAll(); });
+document.getElementById("filter-documento").addEventListener("input", () => { currentPage = 1; renderAll(); });
+document.getElementById("filter-fecha").addEventListener("input", () => { currentPage = 1; renderAll(); });
+document.getElementById("filter-bpcs").addEventListener("input", () => { currentPage = 1; renderAll(); });
+document.getElementById("page-size").addEventListener("change", (e) => { pageSize = parseInt(e.target.value,10); currentPage = 1; renderAll(); });
+document.getElementById("btn-clear-filters").addEventListener("click", () => {
+  document.getElementById("table-search").value = "";
+  document.getElementById("filter-documento").value = "";
+  document.getElementById("filter-fecha").value = "";
+  document.getElementById("filter-bpcs").value = "";
+  document.getElementById("filter-estatus").value = "all";
+  document.getElementById("filter-bodega").value = "all";
+  if (document.getElementById("filter-mes")) document.getElementById("filter-mes").value = "all";
+  currentPage = 1;
+  renderAll();
+  showToast("Filtros restablecidos", "Mostrando la totalidad de pedidos disponibles.");
+});
+document.getElementById("modal-close").addEventListener("click", closeModal);
+document.getElementById("modal-cancel").addEventListener("click", closeModal);
+document.getElementById("modal-save").addEventListener("click", saveModal);
+document.getElementById("edit-modal").addEventListener("click", (e) => { if (e.target.id === "edit-modal") closeModal(); });
+
+loadData();
+</script>
+</body>
+</html>
