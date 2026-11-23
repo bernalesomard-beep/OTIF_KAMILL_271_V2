@@ -112,6 +112,14 @@ tr.row-selected{background-color:rgba(91,184,254,0.12);}
         <span class="material-symbols-outlined text-[18px]">description</span>
         <span>Exportar CSV</span>
       </button>
+      <button class="inline-flex items-center gap-space-xs px-space-md py-space-xs rounded-lg bg-surface-container-high hover:bg-surface-container-highest transition-colors text-on-surface font-label-md text-label-md font-bold shadow-sm" id="template-btn" type="button" title="Descarga la plantilla Excel para cargar pedidos nuevos">
+        <span class="material-symbols-outlined text-[18px]">download</span>
+        <span>Descargar Plantilla</span>
+      </button>
+      <button class="inline-flex items-center gap-space-xs px-space-md py-space-xs rounded-lg bg-secondary text-on-secondary font-label-md text-label-md font-bold shadow-md hover:opacity-90 transition-opacity" id="upload-btn" type="button" title="Sube la plantilla llena para agregar pedidos al Sheet">
+        <span class="material-symbols-outlined text-[18px]">upload_file</span>
+        <span>Cargar Pedidos</span>
+      </button>
       <button class="inline-flex items-center gap-space-xs px-space-md py-space-xs rounded-lg bg-primary-container text-on-primary font-label-md text-label-md font-bold shadow-md hover:opacity-90 transition-opacity" id="export-xlsx-btn" type="button">
         <span class="material-symbols-outlined text-[18px]">ios_share</span>
         <span>Exportar Excel</span>
@@ -1060,6 +1068,41 @@ tr.row-selected{background-color:rgba(91,184,254,0.12);}
 </div>
 
 <!-- ============================ TOAST FLOTANTE ============================ -->
+<!-- ============================ MODAL: CARGA MASIVA DE PEDIDOS ============================ -->
+<div id="upload-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/40 p-4">
+  <div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div class="p-space-lg border-b border-outline-variant/30 flex items-center justify-between sticky top-0 bg-surface-container-lowest z-10">
+      <div class="flex flex-col">
+        <span class="font-headline-md text-headline-md font-bold text-on-surface">Cargar Pedidos desde Plantilla</span>
+        <span class="font-body-sm text-body-sm text-on-surface-variant">El ID_PEDIDO (correlativo) se asigna automáticamente en el Sheet.</span>
+      </div>
+      <button id="upload-close-btn" class="p-1.5 rounded-lg hover:bg-surface-container-high text-on-surface-variant transition-colors" type="button">
+        <span class="material-symbols-outlined text-[22px]">close</span>
+      </button>
+    </div>
+    <div class="p-space-lg flex flex-col gap-space-md">
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm font-semibold text-on-surface-variant uppercase">Archivo (.xlsx, .xls o .csv)</span>
+        <input id="upload-file" type="file" accept=".xlsx,.xls,.csv" class="px-space-md py-2 bg-surface-container-low rounded-lg text-body-sm">
+      </label>
+      <div id="upload-preview" class="hidden flex-col gap-space-sm"></div>
+    </div>
+    <div class="p-space-lg border-t border-outline-variant/30 flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm sticky bottom-0 bg-surface-container-lowest">
+      <div class="flex flex-col gap-1">
+        <span id="upload-status" class="font-label-sm text-label-sm text-on-surface-variant"></span>
+        <div class="flex items-center gap-space-xs">
+          <span class="material-symbols-outlined text-[16px] text-on-surface-variant">lock</span>
+          <input id="upload-password" type="password" placeholder="Clave para guardar..." class="px-space-sm py-1.5 bg-surface-container-low rounded-lg text-body-sm focus:outline-none w-56">
+        </div>
+      </div>
+      <div class="flex items-center gap-space-sm">
+        <button id="upload-cancel" class="px-space-lg py-2 rounded-lg bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold" type="button">Cancelar</button>
+        <button id="upload-confirm" class="px-space-lg py-2 rounded-lg bg-primary-container text-on-primary font-label-md text-label-md font-bold shadow-sm opacity-50" type="button" disabled>Cargar al Sheet</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="live-toast" class="fixed bottom-6 right-6 z-[110] transform translate-y-16 opacity-0 transition-all duration-300 pointer-events-none">
   <div class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary rounded-xl shadow-xl border border-secondary-container/20">
     <div class="w-2.5 h-2.5 rounded-full bg-tertiary-fixed animate-ping shrink-0"></div>
@@ -2928,6 +2971,221 @@ function exportXLSX(rows, filenameSuffix) {
   XLSX.writeFile(wb, `OTIF_Kamill_${filenameSuffix}_${Date.now()}.xlsx`);
   showToast("Descarga Excel lista", rows.length.toLocaleString("es-PE") + " pedidos exportados a .xlsx.");
 }
+
+/* ---------- Plantilla y carga masiva de pedidos ---------- */
+const UPLOAD_COLS = [
+  { key: "FECHA_CREACION", label: "FECHA DE CREACION", required: true },
+  { key: "PEDIDO_BPCS",    label: "PEDIDO BPCS",       required: true },
+  { key: "BODEGA",         label: "BODEGA",            required: true },
+  { key: "DOCUMENTO",      label: "DOCUMENTO",         required: true },
+  { key: "DESTINATARIO",   label: "DESTINATARIO",      required: false },
+  { key: "CODIGO",         label: "CODIGO",            required: true },
+  { key: "DESCRIPCION",    label: "DESCRIPCION",       required: true },
+  { key: "UNIDADES",       label: "UNIDADES",          required: true },
+  { key: "EAN13",          label: "EAN 13",            required: false }
+];
+const UPLOAD_CHUNK = 150;
+let UPLOAD_STATE = { valid: [], dups: 0, errors: [], total: 0 };
+
+function escHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function normHeader(h) {
+  return String(h || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/_/g, " ").replace(/\s+/g, " ").trim();
+}
+function normFechaUpload(v) {
+  if (v === undefined || v === null || v === "") return "";
+  if (v instanceof Date && !isNaN(v)) {
+    const d = new Date(v.getTime() + 12 * 3600 * 1000);
+    return String(d.getUTCFullYear()) + String(d.getUTCMonth() + 1).padStart(2, "0") + String(d.getUTCDate()).padStart(2, "0");
+  }
+  const s = String(v).trim();
+  if (/^\d{8}$/.test(s)) return s;
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return m[1] + m[2] + m[3];
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); // dd/mm/aaaa
+  if (m) return m[3] + m[2].padStart(2, "0") + m[1].padStart(2, "0");
+  return "";
+}
+function cellToText(v) {
+  if (v === undefined || v === null) return "";
+  if (typeof v === "number") return String(v);
+  return String(v).trim();
+}
+
+function downloadTemplate() {
+  if (!window.XLSX) { alert("La librería de Excel no cargó. Verifica tu conexión a internet."); return; }
+  const wb = XLSX.utils.book_new();
+  const ws = buildStyledSheet(UPLOAD_COLS.map(c => c.label), [], [20, 14, 12, 16, 28, 16, 44, 12, 18]);
+  XLSX.utils.book_append_sheet(wb, ws, "PLANTILLA_PEDIDOS");
+  const instr = [
+    "1. Llena una fila por cada línea del pedido, desde la fila 2 (no borres los encabezados).",
+    "2. NO llenes ID_PEDIDO: el correlativo se asigna solo al cargar.",
+    "3. FECHA DE CREACION en formato AAAAMMDD (ej. 20261123). También se acepta AAAA-MM-DD o DD/MM/AAAA.",
+    "4. Obligatorios: FECHA DE CREACION, PEDIDO BPCS, BODEGA, DOCUMENTO, CODIGO, DESCRIPCION, UNIDADES.",
+    "5. Opcionales: DESTINATARIO, EAN 13.",
+    "6. Las líneas que ya existan en el Sheet (mismo BPCS + Documento + Código) se omiten para no duplicar.",
+    "7. Sube el archivo con el botón 'Cargar Pedidos' del tablero."
+  ].map(t => [{ v: t }]);
+  const wsI = XLSX.utils.aoa_to_sheet(instr.map(r => [r[0].v]));
+  wsI["!cols"] = [{ wch: 110 }];
+  XLSX.utils.book_append_sheet(wb, wsI, "INSTRUCCIONES");
+  XLSX.writeFile(wb, "Plantilla_Detalle_Pedidos.xlsx");
+  showToast("Plantilla descargada", "Llénala y súbela con 'Cargar Pedidos'.");
+}
+
+function openUploadModal() {
+  UPLOAD_STATE = { valid: [], dups: 0, errors: [], total: 0 };
+  document.getElementById("upload-file").value = "";
+  document.getElementById("upload-password").value = "";
+  document.getElementById("upload-status").textContent = CONFIG.APPS_SCRIPT_URL ? "" : "Modo solo lectura: configura APPS_SCRIPT_URL para poder guardar.";
+  const prev = document.getElementById("upload-preview");
+  prev.innerHTML = ""; prev.classList.add("hidden"); prev.classList.remove("flex");
+  setUploadConfirmEnabled(false);
+  document.getElementById("upload-modal").classList.remove("hidden");
+  document.getElementById("upload-modal").classList.add("flex");
+}
+function closeUploadModal() {
+  document.getElementById("upload-modal").classList.add("hidden");
+  document.getElementById("upload-modal").classList.remove("flex");
+}
+function setUploadConfirmEnabled(on) {
+  const b = document.getElementById("upload-confirm");
+  b.disabled = !on;
+  b.classList.toggle("opacity-50", !on);
+}
+
+function handleUploadFile(file) {
+  if (!file) return;
+  if (!window.XLSX) { alert("La librería de Excel no cargó. Verifica tu conexión a internet."); return; }
+  const statusEl = document.getElementById("upload-status");
+  statusEl.className = "font-label-sm text-label-sm text-on-surface-variant";
+  statusEl.textContent = "Leyendo archivo...";
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const wb = XLSX.read(new Uint8Array(ev.target.result), { type: "array", cellDates: true });
+      const sheetName = wb.SheetNames.find(n => normHeader(n) !== "INSTRUCCIONES") || wb.SheetNames[0];
+      const aoa = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1, defval: "", raw: true });
+      parseUploadRows(aoa);
+      statusEl.textContent = "";
+    } catch (err) {
+      console.error(err);
+      statusEl.className = "font-label-sm text-label-sm text-error font-semibold";
+      statusEl.textContent = "No se pudo leer el archivo: " + err.message;
+      setUploadConfirmEnabled(false);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseUploadRows(aoa) {
+  const header = (aoa[0] || []).map(normHeader);
+  const idx = {};
+  UPLOAD_COLS.forEach(c => { idx[c.key] = header.indexOf(normHeader(c.label)); });
+  const missing = UPLOAD_COLS.filter(c => c.required && idx[c.key] === -1).map(c => c.label);
+  const prev = document.getElementById("upload-preview");
+  prev.classList.remove("hidden"); prev.classList.add("flex");
+
+  if (missing.length) {
+    prev.innerHTML = `<div class="rounded-lg border border-red-200 bg-red-50 p-space-md text-body-sm text-red-800">Faltan columnas obligatorias en la fila 1: <strong>${escHtml(missing.join(", "))}</strong>. Descarga la plantilla y úsala tal cual.</div>`;
+    UPLOAD_STATE = { valid: [], dups: 0, errors: [], total: 0 };
+    setUploadConfirmEnabled(false);
+    return;
+  }
+
+  const existentes = new Set(ROWS.map(r => [r.PEDIDO_BPCS, r.DOCUMENTO, r.CODIGO].map(x => String(x || "").trim()).join("|")));
+  const valid = [], errors = [];
+  let dups = 0, total = 0;
+
+  for (let i = 1; i < aoa.length; i++) {
+    const raw = aoa[i];
+    if (!raw || !raw.some(c => String(c).trim() !== "")) continue; // fila vacía
+    total++;
+    const excelRow = i + 1;
+    const obj = {};
+    UPLOAD_COLS.forEach(c => {
+      const v = idx[c.key] === -1 ? "" : raw[idx[c.key]];
+      obj[c.key] = c.key === "FECHA_CREACION" ? normFechaUpload(v) : cellToText(v);
+    });
+    const faltan = UPLOAD_COLS.filter(c => c.required && obj[c.key] === "").map(c => c.label);
+    if (faltan.length) {
+      const fechaRaw = idx.FECHA_CREACION === -1 ? "" : cellToText(raw[idx.FECHA_CREACION]);
+      errors.push(`Fila ${excelRow}: ${faltan.includes("FECHA DE CREACION") && fechaRaw ? "fecha no válida (" + fechaRaw + ")" : "falta " + faltan.join(", ")}`);
+      continue;
+    }
+    const unid = parseFloat(String(obj.UNIDADES).replace(",", "."));
+    if (isNaN(unid) || unid < 0) { errors.push(`Fila ${excelRow}: UNIDADES no es un número válido (${obj.UNIDADES})`); continue; }
+    obj.UNIDADES = unid;
+    const key = [obj.PEDIDO_BPCS, obj.DOCUMENTO, obj.CODIGO].join("|");
+    if (existentes.has(key)) { dups++; continue; }
+    valid.push(obj);
+  }
+
+  UPLOAD_STATE = { valid, dups, errors, total };
+  const pedidos = new Set(valid.map(v => v.PEDIDO_BPCS)).size;
+  const unidades = valid.reduce((s, v) => s + v.UNIDADES, 0);
+  const box = (label, val, cls) => `<div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col"><span class="text-[10px] uppercase tracking-wide text-on-surface-variant font-semibold">${label}</span><span class="text-[18px] font-bold ${cls || "text-on-surface"}">${val}</span></div>`;
+  prev.innerHTML = `
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-space-sm">
+      ${box("Filas leídas", total.toLocaleString("es-PE"))}
+      ${box("A cargar", valid.length.toLocaleString("es-PE"), "text-on-tertiary-container")}
+      ${box("Pedidos (BPCS)", pedidos.toLocaleString("es-PE"))}
+      ${box("Unidades", Math.round(unidades).toLocaleString("es-PE"))}
+    </div>
+    ${dups ? `<div class="text-body-sm text-amber-700">${dups.toLocaleString("es-PE")} línea(s) ya existen en el Sheet (mismo BPCS + Documento + Código) y se omitirán.</div>` : ""}
+    ${errors.length ? `<div class="rounded-lg border border-red-200 bg-red-50 p-space-md text-body-sm text-red-800"><strong>${errors.length} fila(s) con error (no se cargarán):</strong><ul class="list-disc ml-5 mt-1">${errors.slice(0, 8).map(e => `<li>${escHtml(e)}</li>`).join("")}${errors.length > 8 ? `<li>... y ${errors.length - 8} más</li>` : ""}</ul></div>` : ""}
+    ${!valid.length ? `<div class="text-body-sm text-on-surface-variant">No hay filas nuevas válidas para cargar.</div>` : ""}`;
+  setUploadConfirmEnabled(valid.length > 0 && !!CONFIG.APPS_SCRIPT_URL);
+}
+
+async function confirmUpload() {
+  const statusEl = document.getElementById("upload-status");
+  const password = document.getElementById("upload-password").value;
+  const rows = UPLOAD_STATE.valid;
+  if (!rows.length) return;
+  if (!password) {
+    statusEl.className = "font-label-sm text-label-sm text-error font-semibold";
+    statusEl.textContent = "Ingresa la clave para guardar.";
+    return;
+  }
+  setUploadConfirmEnabled(false);
+  statusEl.className = "font-label-sm text-label-sm text-on-surface-variant";
+  let cargadas = 0;
+  try {
+    for (let i = 0; i < rows.length; i += UPLOAD_CHUNK) {
+      const chunk = rows.slice(i, i + UPLOAD_CHUNK);
+      statusEl.textContent = `Cargando ${Math.min(i + chunk.length, rows.length)} de ${rows.length}...`;
+      const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "bulkAdd", password: password, rows: chunk })
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "Error desconocido");
+      cargadas += data.added || chunk.length;
+    }
+    statusEl.className = "font-label-sm text-label-sm text-on-tertiary-container font-semibold";
+    statusEl.textContent = `Listo: ${cargadas} líneas cargadas.`;
+    showToast("Pedidos cargados", cargadas.toLocaleString("es-PE") + " líneas agregadas al Sheet con su correlativo.");
+    await loadData();
+    setTimeout(closeUploadModal, 800);
+  } catch (err) {
+    console.error(err);
+    statusEl.className = "font-label-sm text-label-sm text-error font-semibold";
+    statusEl.textContent = `Error tras cargar ${cargadas} línea(s): ${err.message}. Vuelve a subir el mismo archivo: las ya cargadas se omiten solas.`;
+    if (cargadas > 0) loadData();
+    setUploadConfirmEnabled(true);
+  }
+}
+
+document.getElementById("template-btn").addEventListener("click", downloadTemplate);
+document.getElementById("upload-btn").addEventListener("click", openUploadModal);
+document.getElementById("upload-file").addEventListener("change", (e) => handleUploadFile(e.target.files[0]));
+document.getElementById("upload-confirm").addEventListener("click", confirmUpload);
+document.getElementById("upload-close-btn").addEventListener("click", closeUploadModal);
+document.getElementById("upload-cancel").addEventListener("click", closeUploadModal);
+document.getElementById("upload-modal").addEventListener("click", (e) => { if (e.target.id === "upload-modal") closeUploadModal(); });
 
 /* ---------- Eventos ---------- */
 document.getElementById("sync-btn").addEventListener("click", () => {
